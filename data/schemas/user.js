@@ -47,7 +47,7 @@ UserSchema.statics.login = function(username, password, cid, callback){
             function(result, next){
                 if (result == null) {
                     next({
-                        err: '用户名或密码错误!'
+                        ppMsg: '用户名或密码错误!'
                     }, null);
                 }
                 //用户名密码正确
@@ -77,7 +77,7 @@ UserSchema.statics.login = function(username, password, cid, callback){
                 );
                 self.update(
                     {
-                        _id: tmpUser.id
+                        id: tmpUser.id
                     },
                     {
                         $set:
@@ -130,11 +130,22 @@ UserSchema.methods.getMeets = function(callback) {
 
 //发送meet检查
 UserSchema.methods.sendMeetCheck = function() {
-    return (this.specialInfoTime
-        &&  this.specialInfoTime > moment(moment().format('YYYY-MM-DD')).valueOf()
-        && this.lastLocationTime > moment().add(-5, 'm').valueOf()
-        && this.lastMeetCreateTime < moment().add(-30, 's').valueOf()
-        );
+    var tmpNow =  moment();
+
+    if (!(this.specialInfoTime && this.specialInfoTime > moment(moment().format('YYYY-MM-DD')).valueOf())){
+        return '请更新特征信息!';
+    }
+    else if (!(this.lastLocationTime > moment(tmpNow).add(-5, 'm').valueOf()))
+    {
+        return '请更新当前位置!';
+    }
+    else if (!(this.lastMeetCreateTime < moment(tmpNow).add(-30, 's').valueOf())){
+        return '距离允许发送新邀请还有:' + (lastMeetCreateTime - moment(tmpNow).add(-30, 's').valueOf())/1000 + '秒';
+    }
+    else
+    {
+        return 'ok';
+    }
 };
 
 //找本人发送待回复的meet中的目标
@@ -266,7 +277,7 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
             }
             else if (!doc)
             {
-                callback({err: '没找到对应目标!'}, null);
+                callback({ppMsg: '没找到对应目标!'}, null);
             }
             else
             {
@@ -279,7 +290,8 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
                         target: {
                             username: doc.username,
                             nickname: doc.nickname
-                        }
+                        },
+                        messages : []
                     }
                 )
                     .exec(callback);
@@ -370,7 +382,7 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
                 this.lastFakeTime = undefined;
                 this.save(next);
             },
-            function(result, next)
+            function(result, num, next)
             {
                 //查找target
                 this.model('User').findOne({username: username}, next);
@@ -378,7 +390,7 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
             function(result, next){
                 if (result == null)
                 {
-                    next({err: '没有找到对应目标!'}, null);
+                    next({ppMsg: '没有找到对应目标!'}, null);
                 }
                 else
                 {
@@ -423,29 +435,31 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
 
 //确认meet
 UserSchema.methods.confirmMeet = function(username, meetId, callback){
+    var self = this;
+
     async.waterfall([
             function(next)
             {
                 //清空最近选择fake时间
-                this.lastFakeTime = undefined;
-                this.save(next);
+                self.lastFakeTime = undefined;
+                self.save(next);
             },
-            function(result, next)
+            function(result, num, next)
             {
                 //查找target
-                this.model('User').findOne({username: username}, next);
+                self.model('User').findOne({username: username}, next);
             },
             function(result, next){
                 if (result == null)
                 {
-                    next({err: '没有找到对应目标!'}, null);
+                    next({ppMsg: '没有找到对应目标!'}, null);
                 }
                 else
                 {
                     //更新meet target
-                    this.model('Meet').findOneAndUpdate(
+                    self.model('Meet').findOneAndUpdate(
                         {
-                            _id: meetId
+                            id: meetId
                         },
                         {
                             $set:{
@@ -467,7 +481,59 @@ UserSchema.methods.confirmMeet = function(username, meetId, callback){
 
 //确认互发meet
 UserSchema.methods.confirmEachOtherMeet = function(username, meetId, anotherMeet, callback){
-
+    async.waterfall([
+            //清空最近选择fake时间
+            function(next)
+            {
+                this.lastFakeTime = undefined;
+                this.save(next);
+            },
+            function(result, num, next)
+            {
+                //查找target
+                this.model('User').findOne({username: username}, next);
+            },
+            //己方meet添加target为对方并修改状态为'成功'
+            function(result, next){
+                if (result == null)
+                {
+                    next({ppMsg: '没有找到对应目标!'}, null);
+                }
+                else
+                {
+                    //更新meet target
+                    this.model('Meet').findOneAndUpdate(
+                        {
+                            id: meetId
+                        },
+                        {
+                            $set:{
+                                target: {
+                                    username: result.username,
+                                    nickname: result.username,
+                                    specialPic: result.specialPic
+                                },
+                                status: '成功'
+                            }
+                        },
+                        next
+                    );
+                }
+            },
+            //生成朋友
+            function(result, next)
+            {
+                this.createFriend(username, next);
+            },
+            //修改对方meet状态为成功
+            function(result, next)
+            {
+               doc.status = '成功';
+               doc.save(next);
+            }
+        ],
+        callback
+    );
 };
 
 //回复meet点击真人
@@ -477,15 +543,9 @@ UserSchema.methods.replyMeetClickTarget = function(username, meetId, callback){
     async.waterfall([
             function(next)
             {
-                //清空最近选择fake时间
-                this.lastFakeTime = undefined;
-                this.save(next);
-            },
-            function(result, next)
-            {
-                this.model('Meet').findOneAndUpdate(
+                self.model('Meet').findOneAndUpdate(
                     {
-                        _id: meetId,
+                        id: meetId,
                         'target.username': self.username,
                         status: '待回复'
                     },
@@ -500,13 +560,19 @@ UserSchema.methods.replyMeetClickTarget = function(username, meetId, callback){
             function(result, next){
                 if (result == null)
                 {
-                    next({err: '没有找到对应目标!'}, null);
+                    next({ppMsg: '没有找到对应目标!'}, null);
                 }
                 //生成朋友
                 else
                 {
                     self.createFriend(username, next);
                 }
+            },
+            function(result, next)
+            {
+                //清空最近选择fake时间
+                self.lastFakeTime = undefined;
+                self.save(next);
             }
         ],
         callback

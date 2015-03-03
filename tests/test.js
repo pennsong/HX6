@@ -2,7 +2,12 @@ var assert = require("assert");
 var should = require('should');
 var User = require('../data/models/user');
 var request = require('request');
-var serverRoot = 'http://localhost:3000/'
+var serverRoot = 'http://localhost:3000/';
+var moment = require('moment');
+
+var oriPoint = [121.59494756732285, 31.20953894223199];
+var farPoint = [125.32235400000002, 43.88693199999999];
+var testStartTime = moment();
 
 var mongoose = require('mongoose');
 var db = mongoose.connection;
@@ -19,23 +24,123 @@ describe('注册用户', function(){
     before(function(done){
         mongoose.connect('mongodb://localhost/HX6');
         db.once('open', function(){
-            //清空user
+            //初始化用户
+            var userArray = [
+                {
+                    username: '1',
+                    password: '123',
+                    nickname: '1nickname',
+                    //token: ,
+                    cid: '1cid',
+                    specialInfo: {
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    },
+                    specialPic : '1.jpg',
+                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    lastLocation : oriPoint,
+                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    //lastFakeTime : Date
+                },
+                {
+                    username: 'x',
+                    password: '123',
+                    nickname: 'xnickname',
+                    token: 'xt',
+                    cid: 'xcid',
+                    specialInfo: {
+                        sex: '女',
+                        hair: '辫子/盘发',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    },
+                    specialPic : 'x.jpg',
+                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    lastLocation : oriPoint,
+                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    //lastFakeTime : Date
+                },
+                {
+                    username: 'y',
+                    password: '123',
+                    nickname: 'ynickname',
+                    token: 'yt',
+                    cid: 'ycid',
+                    specialInfo: {
+                        sex: '女',
+                        hair: '辫子/盘发',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    },
+                    specialPic : 'x.jpg',
+                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    lastLocation : oriPoint,
+                    lastLocationTime : testStartTime.add(-6, 'm').valueOf(),
+                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    //lastFakeTime : Date
+                }
+            ];
+
+            var friendArray = [
+                {
+                    creater: {
+                        username: '1',
+                        nickname: '1nickname'
+                    },
+                    target: {
+                        username: 'x',
+                        nickname: 'xnickname'
+                    },
+                    messages : []
+                }
+            ];
+
+            var meetArray = [
+                {
+                    creater: {
+                        username: '1',
+                        nickname: '1nickname',
+                        specialPic: '1.jpg'
+                    },
+                    target: {
+                        username: 'y',
+                        nickname: 'ynickname',
+                        specialPic: 'y.jpg'
+                    },
+                    status : '待回复',
+                    replyLeft : 2,
+                    mapLoc : {
+                        name : '北京银行(安华路支行)',
+                        address : '北京市朝阳区外馆东街51号商业楼首层0102',
+                        uid : '110941faff26cbcd4557261c'
+                    },
+                    personLoc : oriPoint,
+                    specialInfo: {
+                        sex: { type: String, enum: ['男', '女'], required: true },
+                        hair  : { type: String, required: true },
+                        glasses : { type: String, required: true },
+                        clothesType : { type: String, required: true },
+                        clothesColor : { type: String, required: true },
+                        clothesStyle : { type: String, required: true }
+                    }
+                }
+            ];
+
             User.remove(
                 function(err){
                     if (!err)
                     {
-                        //新加用户a
-                        User.create(
-                            {
-                                username: 'a',
-                                password: 'a',
-                                nickname: 'an',
-                                token: 'at',
-                                cid: 'testCid',
-                                'specialInfo.sex': '男'
-                            },
-                            done
-                        );
+                        User.create(userArray, done);
                     }
                 }
             );
@@ -54,7 +159,7 @@ describe('注册用户', function(){
                     method: 'POST',
                     json: true,
                     body: {
-                        username: 'b',
+                        username: 'z',
                         password: 'b',
                         nickname: 'bn',
                         token: 'bt',
@@ -66,229 +171,6 @@ describe('注册用户', function(){
                 {
                     im.statusCode.should.equal(200);
                     res.token.should.exist;
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加重名用户', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        nickname: 'an',
-                        token: 'at',
-                        cid: 'testCid',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.code.should.equal(11000);
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失cid', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        nickname: 'an',
-                        token: 'at',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors.cid.type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失用户名', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        password: 'a',
-                        nickname: 'an',
-                        token: 'at',
-                        cid: 'testCid',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors.username.type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失密码', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        nickname: 'an',
-                        token: 'at',
-                        cid: 'testCid',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors.password.type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失昵称', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        token: 'at',
-                        cid: 'testCid',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors.nickname.type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失令牌', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        nickname: 'an',
-                        cid: 'testCid',
-                        sex: '男'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors.token.type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失性别', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        nickname: 'an',
-                        cid: 'testCid',
-                        token: 'at'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors['specialInfo.sex'].type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户缺失所有(除了cid)', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        cid: 'testCid'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors['specialInfo.sex'].type.should.equal("required");
-                    done(err);
-                }
-            );
-        })
-    })
-
-    describe('新加用户错误的性别', function(){
-        it('应该保存失败', function(done){
-            request(
-                {
-                    url: serverRoot + "users/register",
-                    method: 'POST',
-                    json: true,
-                    body: {
-                        username: 'a',
-                        password: 'a',
-                        nickname: 'an',
-                        cid: 'testCid',
-                        token: 'at',
-                        sex: '人妖'
-                    }
-                },
-                function(err, im, res)
-                {
-                    im.statusCode.should.equal(400);
-                    res.errors['specialInfo.sex'].type.should.equal("enum");
                     done(err);
                 }
             );

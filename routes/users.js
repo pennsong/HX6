@@ -33,7 +33,7 @@ function requireAuthentication(req, res, next){
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).json({ err: "缺少令牌!"});
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少令牌!"});
         return;
     }
     else
@@ -41,13 +41,13 @@ function requireAuthentication(req, res, next){
         User.findOne({token: req.body.token}).exec(function(err, doc){
             if (err)
             {
-                res.status(400).json(err);
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             }
             else
             {
                 if (doc == null)
                 {
-                    res.status(400).json({ err: "认证错误!"});
+                    res.status(400).json({ ppResult: 'err', ppMsg: "认证错误!"});
                 }
                 else
                 {
@@ -134,7 +134,7 @@ router.post('/register', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).send({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
@@ -148,18 +148,18 @@ router.post('/register', function(req, res) {
         function(err, doc){
             if (err)
             {
-                res.status(400).json(err);
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             }
             else
             {
                 User.login(req.body.username, req.body.password, req.body.cid, function(err, result){
                     if (err)
                     {
-                        res.status(400).json(err);
+                        res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
                     }
                     else
                     {
-                        res.json(result);
+                        res.json({ ppResult: 'ok', ppData: result});
                     }
                 });
             }
@@ -174,18 +174,18 @@ router.post('/login', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
     User.login(req.body.username, req.body.password, req.body.cid, function(err, result){
         if (err)
         {
-            res.status(400).json(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
-            res.json(result);
+            res.json({ ppResult: 'ok', ppData: result});
         }
     });
 });
@@ -193,36 +193,37 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
-router.post('/uploadLocation', function(req, res) {
+router.post('/updateLocation', function(req, res) {
     req.assert('lng', 'required').notEmpty();
     req.assert('lat', 'required').notEmpty();
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
     req.user.updateLocation(req.body.lng, req.body.lat, function(err){
         if (err)
         {
-            res.status(400).send({"errors": err});
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
-            res.json("ok");
+            res.json({ppResult: 'ok'});
         }
     });
 });
 
 router.post('/sendMeetCheck', function(req, res) {
-    if (req.user.sendMeetCheck())
+    var tmpStr = req.user.sendMeetCheck();
+    if (tmpStr == 'ok')
     {
-        res.json("ok");
+        res.json({ppResult: 'ok'});
     }
     else
     {
-        res.json("no");
+        res.status(400).json({ ppResult: 'err', ppMsg: tmpStr});
     }
 });
 
@@ -231,18 +232,18 @@ router.post('/searchLoc', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
     searchLoc(req.body.keyword, req.user.lastLocation[0], req.user.lastLocation[1], function(err, result){
         if (err)
         {
-            res.status(400).send({"errors": err});
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
-            res.json(result);
+            res.json({ppResult: 'ok', ppData: result });
         }
     });
 });
@@ -257,7 +258,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
@@ -268,7 +269,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
     function finalCallback(err){
         if (err)
         {
-            res.status(400).send(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             return;
         }
         else
@@ -276,31 +277,50 @@ router.post('/createMeetSearchTarget', function(req, res) {
             targets3 = targets3.filter( function( item ) {
                 return (targets1.indexOf( item.username ) < 0 && targets2.indexOf( item.username ));
             });
-            res.json(targets3);
+            res.json({ppResult: 'ok', ppData: targets3 });
         }
     }
 
     async.parallel([
-            function(){
+            function(callback){
                 //找本人发送待回复的meet中的目标
                 req.user.getMeetTargets(function(err, docs){
-                    targets1 = docs.map(function(item){
-                        return item.target.username;
-                    });
+                    if (err)
+                    {
+                        callback(err, null);
+                    }
+                    else
+                    {
+                        targets1 = docs.map(function(item){
+                            return item.target.username;
+                        });
+                    }
                 });
             },
-            function(){
+            function(callback){
                 //找本人朋友
                 req.user.getFriends(function(err, docs){
-                    targets2 = docs.map(function(item){
-                        return item.target.username;
-                    });
+                    if (err)
+                    {
+                        callback(err, null);
+                    }
+                    else {
+                        targets2 = docs.map(function(item){
+                            return item.target.username;
+                        });
+                    }
                 });
             },
-            function(){
+            function(callback){
                 //找符合条件的对象
                 req.user.getTargets(req.body.sex, req.body.hair, req.body.glasses, req.body.clothesType, req.body.clothesColor, req.body.clothesStyle, function(err, docs){
-                    targets3 = docs;
+                    if (err)
+                    {
+                        callback(err, null);
+                    }
+                    else {
+                        targets3 = docs;
+                    }
                 });
             }
         ],
@@ -313,7 +333,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
@@ -324,7 +344,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
     function finalCallback(err){
         if (err)
         {
-            res.status(400).send(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             return;
         }
         else
@@ -332,7 +352,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
             targets3 = targets3.filter( function( item ) {
                 return (targets1.indexOf( item.username ) < 0 && targets2.indexOf( item.username ));
             });
-            res.json(targets3);
+            res.json({ppResult: 'ok', ppData: targets3 });
         }
     }
 
@@ -369,7 +389,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
             },
             function(callback){
                 //找对应meet
-                Meet.findOne({_id: req.body.meetId}).exec(function(err, doc){
+                Meet.findOne({id: req.body.meetId}).exec(function(err, doc){
                         if (err)
                         {
                             callback(err, null);
@@ -378,7 +398,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                         {
                             if (doc == null)
                             {
-                                callback({err: "没有对应meet!"}, null);
+                                callback({ppMsg: "没有对应meet!"}, null);
                             }
                             else
                             {
@@ -417,11 +437,11 @@ router.post('/createMeetNo', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
-    req.user.createmeetNo(
+    req.user.createMeetNo(
         req.body.mapLocName,
         req.body.mapLocUid,
         req.body.mapLocAddress,
@@ -435,11 +455,11 @@ router.post('/createMeetNo', function(req, res) {
         {
             if (err)
             {
-                res.status(400).send(err);
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             }
             else
             {
-                res.json(result.meet);
+                res.json({ ppResult: 'ok', ppData: result.meet});
             }
         }
     );
@@ -449,11 +469,11 @@ router.post('/createOrConfirmClickFake', function(req, res) {
     req.user.createOrConfirmClickFake(function(err, result){
         if (err)
         {
-            res.status(400).send(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
-            res.json('ok');
+            res.json({ ppResult: 'ok'});
         }
     });
 });
@@ -466,13 +486,14 @@ router.post('/createMeetClickTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
-    if (!req.user.sendMeetCheck())
+    var tmpStr = req.user.sendMeetCheck();
+    if (tmpStr != 'ok')
     {
-        res.status(400).send({err: '不符合发送条件!'});
+        res.status(400).send({err: tmpStr});
         return;
     }
 
@@ -491,7 +512,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                             if (item.target.username == username)
                             {
                                 //已对此人发过邀请
-                                callback({err: '已对此人发过邀请!'}, null);
+                                callback({ppMsg: '已对此人发过邀请!'}, null);
                                 break;
                             }
                         }
@@ -512,7 +533,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                             if (item.target.username == username || item.creater.username == username)
                             {
                                 //此人已是你好友
-                                callback({err: '此人已是你好友!'}, null);
+                                callback({ppMsg: '此人已是你好友!'}, null);
                                 break;
                             }
                         }
@@ -526,7 +547,7 @@ router.post('/createMeetClickTarget', function(req, res) {
     function finalCallback(err){
         if (err)
         {
-            res.status(400).send(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
@@ -540,13 +561,13 @@ router.post('/createMeetClickTarget', function(req, res) {
                 function(err, doc){
                     if (err)
                     {
-                        res.status(400).send(err);
+                        res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
                     }
                     else{
                         if (doc == null)
                         {
                             //不是互发,生成meet,记录最近发送meet时间,清空最近选择fake时间
-                            user.createMeet(
+                            req.user.createMeet(
                                 req.body.mapLocName,
                                 req.body.mapLocUid,
                                 req.body.mapLocAddress,
@@ -554,11 +575,11 @@ router.post('/createMeetClickTarget', function(req, res) {
                                 function(err, doc){
                                     if (err)
                                     {
-                                        res.status(400).send(err);
+                                        res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
                                     }
                                     else
                                     {
-                                        res.json(doc);
+                                        res.status(400).json({ ppResult: 'ok', ppData: doc });
                                     }
                                 });
                         }
@@ -568,7 +589,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                             user.createFriend(req.user.username, function(err, result){
                                 if (err)
                                 {
-                                    res.status(400).send(err);
+                                    res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
                                 }
                                 else
                                 {
@@ -576,11 +597,11 @@ router.post('/createMeetClickTarget', function(req, res) {
                                     doc.save(function(err){
                                         if (err)
                                         {
-                                            res.status(400).send(err);
+                                            res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
                                         }
                                         else
                                         {
-                                            res.json('ok');
+                                            res.status(400).json({ ppResult: 'ok'});
                                         }
                                     });
                                 }
@@ -599,12 +620,12 @@ router.post('/confirmMeetClickTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
-    if (req.user.specialInfoTime < moment(moment().format('YYYY-MM-DD')).valueOf()){
-        res.status(400).send({err: '请更新个人信息!'});
+    if ((req.user.specialInfoTime && req.user.specialInfoTime >= moment(moment().format('YYYY-MM-DD')).valueOf())){
+        res.status(400).json({ ppResult: 'err', ppMsg: "请更新特征信息!"});
     }
     else
     {
@@ -612,7 +633,7 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                 //判断是否是本人发送待回复的meet中的目标
                 one: function(callback)
                 {
-                    user.getMeetTargets(function(err, docs){
+                    req.user.getMeetTargets(function(err, docs){
                         if (err)
                         {
                             callback(err, null);
@@ -622,16 +643,17 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                             for (var item in docs){
                                 if (item.target.username == req.body.username)
                                 {
-                                    callback({err: '你已对此人发出过邀请!'}, null);
+                                    callback({ppMsg: '你已对此人发出过邀请!'}, null);
                                     break;
                                 }
                             }
+                            callback(null, null);
                         }
                     });
                 },
                 //判断是否是已有朋友
                 two: function(callback){
-                    user.getFriends(function(err, docs){
+                    req.user.getFriends(function(err, docs){
                         if (err)
                         {
                             callback(err, null);
@@ -641,10 +663,11 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                             for (var item in docs){
                                 if (item.target.username == req.body.username || item.creater.username == req.body.username)
                                 {
-                                    callback({err: '此人已是你朋友!'}, null);
+                                    callback({ppMsg: '此人已是你朋友!'}, null);
                                     break;
                                 }
                             }
+                            callback(null, null);
                         }
                     });
                 },
@@ -665,24 +688,24 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                                 if (doc == null)
                                 {
                                     //不是互发,更新meet的target
-                                    user.confirmMeet(
+                                    req.user.confirmMeet(
                                         req.body.username,
                                         req.body.meetId,
                                         function(err, doc){
                                             if (err)
                                             {
-                                                res.status(400).send(err);
+                                                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
                                             }
                                             else
                                             {
-                                                res.json(doc);
+                                                res.json({ ppResult: 'ok', ppData: doc });
                                             }
                                         }
                                     );
                                 }
                                 else
                                 {
-                                    //互发,己方meet添加target为对方并修改状态为'成功', 生成朋友并修改对方meet状态为成功
+                                    //互发
                                     user.confirmEachOtherMeet(
                                         req.body.username,
                                         req.body.meetId,
@@ -690,11 +713,11 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                                         function(err, doc){
                                             if (err)
                                             {
-                                                res.status(400).send(err);
+                                                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
                                             }
                                             else
                                             {
-                                                res.json('ok');
+                                                res.json({ ppResult: 'ok' });
                                             }
                                         }
                                     );
@@ -707,11 +730,11 @@ router.post('/confirmMeetClickTarget', function(req, res) {
             function(err, result){
                 if (err)
                 {
-                    res.status(400).send(err);
+                    res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
                 }
                 else
                 {
-                    res.json('ok');
+                    res.json({ ppResult: 'ok' });
                 }
             }
         );
@@ -728,7 +751,7 @@ router.post('/updateSpecialInfo', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
@@ -741,11 +764,11 @@ router.post('/updateSpecialInfo', function(req, res) {
     req.user.save(function(err){
         if (err)
         {
-            res.status(400).send(err);
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
         }
         else
         {
-            res.json('ok');
+            res.json({ ppResult: 'ok' });
         }
     });
 });
@@ -757,10 +780,7 @@ router.post('/getSpecialInfo', function(req, res) {
 router.post('/uploadSpecialPic', function(req, res) {
     if (!(req.files && req.files.specialPic))
     {
-        if (err)
-        {
-            res.status(400).send({err: '没有指定上传文件!'});
-        }
+        res.status(400).json({ ppResult: 'err', ppMsg: "没有指定上传文件!" });
     }
     else
     {
@@ -779,14 +799,14 @@ router.post('/replyMeetSearchTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
     async.waterfall([
             function(next){
                 //根据meetId检查是否当前用户是此meet的target
-                Meet.findOne({_id: req.body.meetId}).exec(function(err, doc){
+                Meet.findOne({id: req.body.meetId}).exec(function(err, doc){
                     if (err)
                     {
                         next(err, null);
@@ -795,13 +815,13 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                     {
                         if (doc.target.username != req.user.username)
                         {
-                            next({err: 'meetId错误!'}, null);
+                            next({ppMsg: 'meetId错误!'}, null);
                         }
                         else
                         {
                             if (doc.replyLeft <= 0)
                             {
-                                next({err: '无回复次数!'}, null);
+                                next({ppMsg: '无回复次数!'}, null);
                             }
                             else
                             {
@@ -841,7 +861,7 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                 }
 
                 if (score <= 4){
-                    next({err: '特征信息不匹配!'}, null);
+                    next({ppMsg: '特征信息不匹配!'}, null);
                 }
                 //找到creater的SpecialPic, 并加上3张fake图片
                 else
@@ -859,11 +879,11 @@ router.post('/replyMeetSearchTarget', function(req, res) {
         {
             if (err)
             {
-                res.status(400).send(err);
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             }
             else
             {
-                res.json(result);
+                res.json({ ppResult: 'ok', ppData: result });
             }
         }
     );
@@ -875,19 +895,21 @@ router.post('/replyMeetClickTarget', function(req, res) {
 
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).send(parseError(errors));
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
     req.user.replyMeetClickTarget(
+        req.body.username,
+        req.body.meetId,
         function(err, result){
             if (err)
             {
-                res.status(400).send(err);
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
             }
             else
             {
-                res.json('ok');
+                res.json({ ppResult: 'ok' });
             }
         }
     );
