@@ -139,7 +139,7 @@ UserSchema.methods.sendMeetCheck = function() {
     {
         return '请更新当前位置!';
     }
-    else if (!(this.lastMeetCreateTime < moment(tmpNow).add(-30, 's').valueOf())){
+    else if (this.lastMeetCreateTime && !(this.lastMeetCreateTime < moment(tmpNow).add(-30, 's').valueOf())){
         return '距离允许发送新邀请还有:' + (lastMeetCreateTime - moment(tmpNow).add(-30, 's').valueOf())/1000 + '秒';
     }
     else
