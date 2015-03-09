@@ -24,12 +24,12 @@ var MeetSchema = new mongoose.Schema({
         index: '2dsphere'
     },
     specialInfo: {
-        sex: { type: String, enum: ['男', '女'], required: true },
-        hair  : { type: String, required: true },
-        glasses : { type: String, required: true },
-        clothesType : { type: String, required: true },
-        clothesColor : { type: String, required: true },
-        clothesStyle : { type: String, required: true }
+        sex: { type: String, enum: ['男', '女']},
+        hair  : { type: String },
+        glasses : { type: String },
+        clothesType : { type: String },
+        clothesColor : { type: String },
+        clothesStyle : { type: String }
     }
 });
 

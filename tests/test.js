@@ -1,9 +1,12 @@
 var assert = require("assert");
 var should = require('should');
 var User = require('../data/models/user');
+var Friend = require('../data/models/friend');
+var Meet = require('../data/models/meet');
 var request = require('request');
 var serverRoot = 'http://localhost:3000/';
 var moment = require('moment');
+var async = require("async");
 
 var oriPoint = [121.59494756732285, 31.20953894223199];
 var farPoint = [125.32235400000002, 43.88693199999999];
@@ -20,8 +23,9 @@ process.on('SIGINT', function() {
     });
 });
 
-describe('注册用户', function(){
-    before(function(done){
+describe('API测试', function(){
+    beforeEach(function(done){
+        //console.log('reset.........................................');
         mongoose.connect('mongodb://localhost/HX6');
         db.once('open', function(){
             //初始化用户
@@ -430,6 +434,7 @@ describe('注册用户', function(){
                 }
             ];
 
+            //初始化朋友
             var friendArray = [
                 {
                     creater: {
@@ -488,6 +493,7 @@ describe('注册用户', function(){
                 }
             ];
 
+            //初始化meet
             var meetArray = [
                 {
                     creater: {
@@ -937,44 +943,396 @@ describe('注册用户', function(){
                 }
             ];
 
-            User.remove(
-                function(err){
-                    if (!err)
-                    {
-                        User.create(userArray, done);
+            async.parallel([
+                    function(callback){
+                        User.remove(
+                            function(err){
+                                if (!err)
+                                {
+                                    User.create(userArray, callback);
+                                }
+                            }
+                        );
+                    },
+                    function(callback){
+                        Friend.remove(
+                            function(err){
+                                if (!err)
+                                {
+                                    Friend.create(friendArray, callback);
+                                }
+                            }
+                        );
+                    },
+                    function(callback){
+                        Meet.remove(
+                            function(err){
+                                if (!err)
+                                {
+                                    Meet.create(meetArray, callback);
+                                }
+                            }
+                        );
                     }
-                }
+                ],
+                done
             );
         });
     });
 
-    after(function(done){
+    afterEach(function(done){
         db.close(done);
     });
 
-    describe('正确新加用户', function(){
-        it('应该保存成功并登陆', function(done){
+    describe('注册', function(){
+        it('缺少用户名', function(done){
             request(
                 {
                     url: serverRoot + "users/register",
                     method: 'POST',
                     json: true,
                     body: {
-                        username: 'z',
-                        password: 'b',
-                        nickname: 'bn',
-                        token: 'bt',
-                        cid: 'testCid',
+                        password: '123',
+                        nickname: '1',
+                        cid: '1',
+                        sex: '男'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少密码', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'username2',
+                        nickname: '2',
+                        cid: '2',
+                        sex: '男'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少nickname', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'username3',
+                        password: '123',
+                        cid: '3',
+                        sex: '男'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少sex', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'username4',
+                        password: '123',
+                        nickname: '4',
+                        cid: '4'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('性别错误', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'username5',
+                        password: '123',
+                        nickname: '5',
+                        cid: '5',
+                        sex: 'gay'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少cid', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'username6',
+                        password: '123',
+                        nickname: '6',
+                        sex: '男'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少所有', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('username重复', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'a',
+                        password: '123',
+                        nickname: 'anickname',
+                        cid: 'd',
+                        sex: '男'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('用户名已存在!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[成功注册]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/register",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'b',
+                        password: '123',
+                        nickname: 'bnickname',
+                        cid: 'b',
                         sex: '男'
                     }
                 },
                 function(err, im, res)
                 {
                     im.statusCode.should.equal(200);
-                    res.token.should.exist;
+                    res.ppResult.should.equal('ok');
+                    res.ppData.token.should.be.ok;
                     done(err);
                 }
             );
-        })
+        });
+    });
+
+    describe('登陆', function(){
+        it('用户名不存在', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: 'a1',
+                        password: '123',
+                        cid: 'ac'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('用户名或密码错误!');
+                    done(err);
+                }
+            );
+        });
+
+        it('用户名为空', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        password: '123',
+                        cid: 'ac'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('用户名不能为空!');
+                    done(err);
+                }
+            );
+        });
+
+        it('密码错误', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: '1',
+                        password: '321',
+                        cid: '1c'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('用户名或密码错误!');
+                    done(err);
+                }
+            );
+        });
+
+        it('密码为空', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: '1',
+                        cid: '1c'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[成功登录]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: '1',
+                        password: '123',
+                        cid: '1c'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    res.ppData.token.should.be.ok;
+                    done(err);
+                }
+            );
+        });
+
+        it('[登录后获取meets和friends]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/login",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        username: '1',
+                        password: '123',
+                        cid: '1c'
+                    }
+                },
+                function(err, im, res)
+                {
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    //meet
+                    var username1_q = false;
+                    for (var i = 0; i < res.ppData.meets.length; i++)
+                    {
+                        if (res.ppData.meets[i].creater.username == '1' && res.ppData.meets[i].target.username == 'q')
+                        {
+                            username1_q = true;
+                        }
+                    }
+                    username1_q.should.equal(true);
+                    //friend
+                    var friend1_q = false;
+                    for (var i = 0; i < res.ppData.meets.length; i++)
+                    {
+                        if (res.ppData.meets[i].creater.username == '1' && res.ppData.meets[i].target.username == 'q')
+                        {
+                            username1_q = true;
+                        }
+                    }
+                    username1_q.should.equal(true);
+                    done(err);
+                }
+            );
+        });
     })
 })

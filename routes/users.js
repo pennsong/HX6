@@ -148,7 +148,14 @@ router.post('/register', function(req, res) {
         function(err, doc){
             if (err)
             {
-                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+                if (err.code == 11000)
+                {
+                    res.status(400).json({ ppResult: 'err', ppMsg: '用户名已存在!', err: err });
+                }
+                else
+                {
+                    res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : '注册失败!', err: err });
+                }
             }
             else
             {
@@ -173,8 +180,14 @@ router.post('/login', function(req, res) {
     req.assert('cid', 'required').notEmpty();
 
     var errors = req.validationErrors();
+    var ppMsg;
     if (errors) {
-        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        var err = parseError(errors);
+        if (err.errors.username && err.errors.username.type == 'required')
+        {
+            ppMsg = "用户名不能为空!";
+        }
+        res.status(400).json({ ppResult: 'err', ppMsg: ppMsg ? ppMsg : "缺少必填项!", err: err});
         return;
     }
 
