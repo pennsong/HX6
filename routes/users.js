@@ -784,7 +784,7 @@ router.post('/updateSpecialInfo', function(req, res) {
 });
 
 router.post('/getSpecialInfo', function(req, res) {
-    res.json({specialInfo: req.user.specialInfo, specialPic: req.user.specialPic});
+    res.json({ppResult: 'ok', ppData: {specialInfo: req.user.specialInfo, specialPic: req.user.specialPic}});
 });
 
 router.post('/uploadSpecialPic', function(req, res) {
@@ -823,20 +823,27 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                     }
                     else
                     {
-                        if (doc.target.username != req.user.username)
+                        if (doc == null)
                         {
                             next({ppMsg: 'meetId错误!'}, null);
                         }
                         else
                         {
-                            if (doc.replyLeft <= 0)
+                            if (doc.target.username != req.user.username)
                             {
-                                next({ppMsg: '无回复次数!'}, null);
+                                next({ppMsg: 'meetId错误!'}, null);
                             }
                             else
                             {
-                                doc.replyLeft--;
-                                doc.save(next);
+                                if (doc.replyLeft <= 0)
+                                {
+                                    next({ppMsg: '无回复次数!'}, null);
+                                }
+                                else
+                                {
+                                    doc.replyLeft--;
+                                    doc.save(next);
+                                }
                             }
                         }
                     }
