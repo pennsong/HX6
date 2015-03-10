@@ -1,4 +1,8 @@
-var assert = require("assert");
+//var assert = require("assert");
+//var chai = require("chai");
+//chai.use(require('chai-things'));
+//var should = chai.should();
+
 var should = require('should');
 var User = require('../data/models/user');
 var Friend = require('../data/models/friend');
@@ -160,7 +164,7 @@ describe('API测试', function(){
                     username: 'd',
                     password: '123',
                     nickname: 'dnickname',
-                    //token: 'dt',
+                    token: 'dt',
                     cid: 'dc',
                     specialInfo: {
                         sex: '女'
@@ -172,7 +176,7 @@ describe('API测试', function(){
                     username: 'e',
                     password: '123',
                     nickname: 'enickname',
-                    //token: 'et',
+                    token: 'et',
                     cid: 'ec',
                     specialInfo: {
                         sex: '女',
@@ -437,58 +441,68 @@ describe('API测试', function(){
             //初始化朋友
             var friendArray = [
                 {
-                    creater: {
-                        username: '1',
-                        nickname: '1nickname'
-                    },
-                    target: {
-                        username: 'x',
-                        nickname: 'xnickname'
-                    },
+                    users: [
+                        {
+                            username: '1',
+                            nickname: '1nickname'
+                        },
+                        {
+                            username: 'x',
+                            nickname: 'xnickname'
+                        }
+                    ],
                     messages : []
                 },
                 {
-                    creater: {
-                        username: 'a',
-                        nickname: 'anickname'
-                    },
-                    target: {
-                        username: 'x',
-                        nickname: 'xnickname'
-                    },
+                    users: [
+                        {
+                            username: 'a',
+                            nickname: 'anickname'
+                        },
+                        {
+                            username: 'x',
+                            nickname: 'xnickname'
+                        }
+                    ],
                     messages : []
                 },
                 {
-                    creater: {
-                        username: 'n',
-                        nickname: 'nnickname'
-                    },
-                    target: {
-                        username: 'x',
-                        nickname: 'xnickname'
-                    },
+                    users: [
+                        {
+                            username: 'n',
+                            nickname: 'nnickname'
+                        },
+                        {
+                            username: 'x',
+                            nickname: 'xnickname'
+                        }
+                    ],
                     messages : []
                 },
                 {
-                    creater: {
-                        username: 'o',
-                        nickname: 'onickname'
-                    },
-                    target: {
-                        username: 'x',
-                        nickname: 'xnickname'
-                    },
+                    users: [
+                        {
+                            username: 'o',
+                            nickname: 'onickname'
+                        },
+                        {
+                            username: 'x',
+                            nickname: 'xnickname'
+                        }
+                    ],
                     messages : []
                 },
                 {
-                    creater: {
-                        username: 'p',
-                        nickname: 'pnickname'
-                    },
-                    target: {
-                        username: 'x',
-                        nickname: 'xnickname'
-                    },
+                    users: [
+                        {
+                            username: 'p',
+                            nickname: 'pnickname'
+                        },
+                        {
+                            username: 'x',
+                            nickname: 'xnickname'
+                        }
+                    ],
                     messages : []
                 }
             ];
@@ -1311,28 +1325,755 @@ describe('API测试', function(){
                     im.statusCode.should.equal(200);
                     res.ppResult.should.equal('ok');
                     //meet
-                    var username1_q = false;
-                    for (var i = 0; i < res.ppData.meets.length; i++)
-                    {
-                        if (res.ppData.meets[i].creater.username == '1' && res.ppData.meets[i].target.username == 'q')
-                        {
-                            username1_q = true;
+                    res.ppData.meets.should.match(function(it){
+                        for (var i = 0; i < it.length; i++){
+                            if (it[i].creater.username == '1' && it[i].target.username == 'q')
+                            {
+                                return true;
+                            }
                         }
-                    }
-                    username1_q.should.equal(true);
+                        return false;
+                    });
                     //friend
-                    var friend1_q = false;
-                    for (var i = 0; i < res.ppData.meets.length; i++)
-                    {
-                        if (res.ppData.meets[i].creater.username == '1' && res.ppData.meets[i].target.username == 'q')
-                        {
-                            username1_q = true;
+                    res.ppData.friends.length.should.equal(1);
+                    res.ppData.friends.should.match(function(it){
+                        for (var i = 0; i < it.length; i++){
+                            for (var j=0; j< it[i].users.length; j++)
+                            {
+                                if (it[i].users[j].username == '1')
+                                {
+                                    return true;
+                                }
+                            }
                         }
-                    }
-                    username1_q.should.equal(true);
+                        return false;
+                    });
                     done(err);
                 }
             );
         });
-    })
-})
+    });
+
+    describe('上传最新位置', function(){
+        it('[成功更新位置信息]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/updateLocation",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        lng: 125,
+                        lat: 43
+                    }
+                },
+                function(err, im, res){
+                    if (!err){
+                        im.statusCode.should.equal(200);
+                        res.ppResult.should.equal('ok');
+                        User.findOne({username: 'a'}).exec(function(err, doc){
+                            if (!err){
+                                doc.lastLocation[0].should.equal(125);
+                                doc.lastLocation[1].should.equal(43);
+                                done();
+                            }
+                            else
+                            {
+                                done(err);
+                            }
+                        });
+                    }else
+                    {
+                        done(err);
+                    }
+                }
+            );
+        });
+
+        it('缺少token', function(done){
+            request(
+                {
+                    url: serverRoot + "users/updateLocation",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        lng: 125,
+                        lat: 43
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少lat', function(done){
+            request(
+                {
+                    url: serverRoot + "users/updateLocation",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        lng: 125
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+
+        it('缺少lng', function(done){
+            request(
+                {
+                    url: serverRoot + "users/updateLocation",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        lat: 43
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    done(err);
+                }
+            );
+        });
+    });
+
+    describe('是否可以发送meet', function(){
+        it('[未填写specialInfo无法发起meet]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/sendMeetCheck",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'dt'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('请更新特征信息!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[当天0点前更新的specialInfo无法发起meet]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/sendMeetCheck",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'et'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('请更新特征信息!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[最新5分钟内无上传最新位置无法发起meet]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/sendMeetCheck",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'yt'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('无法定位最新位置!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[可以创建meet]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/sendMeetCheck",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    done(err);
+                }
+            );
+        });
+
+        it('[最近30s有发送meet记录无法发起meet]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/sendMeetCheck",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'zt'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.match(/^'距离允许发送新邀请还有'/);
+                    done(err);
+                }
+            );
+        });
+    });
+
+    describe('获取百度场所信息', function(){
+        it('[根据keyword查找百度信息]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        keyword: '麦当劳'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    res.ppData.should.be.ok;
+                    done(err);
+                }
+            );
+        });
+
+        it('keyword为空', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+    });
+
+    describe('创建meet查找目标', function(){
+        it('[target Sex没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[target Hair没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[target glasses没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[target clothesType没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[target clothesColor没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[target clothesStyle没有填写不能创建]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/searchLoc",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[成功找到符合条件的target]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createMeetSearchTarget",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '女',
+                        hair: '辫子/盘发',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    res.ppData.indexOf({username: 'z', specialPic: 'z.jpg'}).should.gt(-1);
+                    res.ppData.indexOf({username: 'c', specialPic: 'c.jpg'}).should.gt(-1);
+                    res.ppData.indexOf({username: 'x', specialPic: 'x.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'y', specialPic: 'y.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'h', specialPic: 'h.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'q', specialPic: 'q.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'd', specialPic: 'd.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'e', specialPic: 'e.jpg'}).should.equals(-1);
+                    res.ppData.indexOf({username: 'k', specialPic: 'k.jpg'}).should.equals(-1);
+                    done(err);
+                }
+            );
+        });
+
+        it('[无法找到自己]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createMeetSearchTarget",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '竖起来（包括光头）',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    res.ppData.indexOf({username: 'a', specialPic: 'a.jpg'}).should.equals(-1);
+                    done(err);
+                }
+            );
+        });
+
+        it('[成功找到符合条件的target]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createMeetSearchTarget",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        sex: '男',
+                        hair: '辫子/盘发',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    res.ppData.indexOf({username: 'z', specialPic: 'z.jpg'}).should.equals(-1);
+                    done(err);
+                }
+            );
+        });
+    });
+
+    describe('确认meet查找目标', function(){
+        it('[缺少meetId无法查找]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/confirmMeetSearchTarget",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'nt'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('缺少必填项!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[成功找到符合条件的target]', function(done){
+            Meet.findOne({'creater.username': 'n', 'target.username': 'z'}).exec(function(err, doc){
+                if (!err)
+                {
+                    request(
+                        {
+                            url: serverRoot + "users/confirmMeetSearchTarget",
+                            method: 'POST',
+                            json: true,
+                            body: {
+                                token: 'nt',
+                                meetId: doc._id
+                            }
+                        },
+                        function(err, im, res){
+                            im.statusCode.should.equal(200);
+                            res.ppResult.should.equal('ok');
+                            res.ppData.indexOf({username: 'z', specialPic: 'z.jpg'}).should.gt(-1);
+                            res.ppData.indexOf({username: 'c', specialPic: 'c.jpg'}).should.gt(-1);
+                            done(err);
+                        }
+                    );
+                }
+                else
+                {
+                    done(err);
+                }
+            });
+        });
+
+        it('[不属于自己的meetId无法查找]', function(done){
+            Meet.findOne({'creater.username': 'm'}).exec(function(err, doc){
+                if (!err)
+                {
+                    request(
+                        {
+                            url: serverRoot + "users/confirmMeetSearchTarget",
+                            method: 'POST',
+                            json: true,
+                            body: {
+                                token: 'nt',
+                                meetId: doc._id
+                            }
+                        },
+                        function(err, im, res){
+                            im.statusCode.should.equal(400);
+                            res.ppResult.should.equal('err');
+                            res.ppMsg.should.equal('没有对应meet!');
+                            done(err);
+                        }
+                    );
+                }
+                else
+                {
+                    done(err);
+                }
+            });
+        });
+
+        it('[不存在的meetId无法查找]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/confirmMeetSearchTarget",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'nt',
+                        meetId: 'abc'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(400);
+                    res.ppResult.should.equal('err');
+                    res.ppMsg.should.equal('没有对应meet!');
+                    done(err);
+                }
+            );
+        });
+
+        it('[自己的meetId但状态不是"待确认"无法查找]', function(done){
+            Meet.findOne({'creater.username': 'n', 'target.username': 'q'}).exec(function(err, doc){
+                if (!err)
+                {
+                    request(
+                        {
+                            url: serverRoot + "users/confirmMeetSearchTarget",
+                            method: 'POST',
+                            json: true,
+                            body: {
+                                token: 'nt',
+                                meetId: doc._id
+                            }
+                        },
+                        function(err, im, res){
+                            im.statusCode.should.equal(400);
+                            res.ppResult.should.equal('err');
+                            res.ppMsg.should.equal('没有对应meet!');
+                            done(err);
+                        }
+                    );
+                }
+                else
+                {
+                    done(err);
+                }
+            });
+        });
+    });
+
+    describe('创造meet不在其中', function(){
+        it('[创建待确认meet成功]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createMeetNo",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'at',
+                        mapLocName: 'tname',
+                        mapLocUid: '110941faff26cbcd4557261c',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        sex: '男',
+                        hair: '辫子/盘发',
+                        glasses : '无',
+                        clothesType : '大衣',
+                        clothesColor : '白',
+                        clothesStyle : '纯色'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    Meet.findOne({'creater.username': 'a', status: '待确认', 'mapLoc.name': 'tname'}).exec(function(err, doc){
+                        if (!err)
+                        {
+                            doc.should.be.ok;
+                            User.findOne({username: 'a'}).exec(function(err, doc){
+                                if (!err)
+                                {
+                                    doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                                    done();
+                                }
+                                else
+                                {
+                                    done(err);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            done(err);
+                        }
+                    });
+                }
+            );
+        });
+    });
+
+    describe('创建/确认meet点击fake', function(){
+        it('[30s内有点击fake, 再次点击fake把meet最后发送时间修改为now]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createOrConfirmClickFake",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'it'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    User.findOne({username: 'i'}).exec(function(err, doc){
+                        if (!err)
+                        {
+                            doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                            doc.lastFakeTime.should.not.be.ok;
+                        }
+                        else
+                        {
+                            done(err);
+                        }
+                    });
+                }
+            );
+        });
+
+        it('[30s内无点击fake, 点击fake把最后点击fake时间修改为now]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createOrConfirmClickFake",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'jt'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    User.findOne({username: 'j'}).exec(function(err, doc){
+                        if (!err)
+                        {
+                            doc.lastFakeCreateTime.should.gt(moment().add(-3, 's'));
+                        }
+                        else
+                        {
+                            done(err);
+                        }
+                    });
+                }
+            );
+        });
+    });
+
+    describe('创建meet, 点击真人', function(){
+        it('[]', function(done){
+            request(
+                {
+                    url: serverRoot + "users/createOrConfirmClickFake",
+                    method: 'POST',
+                    json: true,
+                    body: {
+                        token: 'it'
+                    }
+                },
+                function(err, im, res){
+                    im.statusCode.should.equal(200);
+                    res.ppResult.should.equal('ok');
+                    User.findOne({username: 'i'}).exec(function(err, doc){
+                        if (!err) {
+                            doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                            doc.lastFakeTime.should.not.be.ok;
+                        }
+                        else {
+                            done(err);
+                        }
+                    });
+                }
+            );
+        });
+    });
+});

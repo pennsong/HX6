@@ -319,7 +319,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                     }
                     else {
                         targets2 = docs.map(function(item){
-                            return item.target.username;
+                            return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
                     }
                 });
@@ -395,7 +395,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                     else
                     {
                         targets2 = docs.map(function(item){
-                            return item.target.username;
+                            return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
                     }
                 });
@@ -493,9 +493,6 @@ router.post('/createOrConfirmClickFake', function(req, res) {
 
 router.post('/createMeetClickTarget', function(req, res) {
     req.assert('username', 'required').notEmpty();
-    req.assert('mapLocName', 'required').notEmpty();
-    req.assert('mapLocUid', 'required').notEmpty();
-    req.assert('mapLocAddress', 'required').notEmpty();
 
     var errors = req.validationErrors();
     if (errors) {
@@ -543,7 +540,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                     {
                         for(var item in docs)
                         {
-                            if (item.target.username == username || item.creater.username == username)
+                            if (item.users[0].username == username || item.users[1].username == username)
                             {
                                 //此人已是你好友
                                 callback({ppMsg: '此人已是你好友!'}, null);
@@ -674,7 +671,7 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                         else
                         {
                             for (var item in docs){
-                                if (item.target.username == req.body.username || item.creater.username == req.body.username)
+                                if (item.users[0].username == req.body.username || item.users[1].username == req.body.username)
                                 {
                                     callback({ppMsg: '此人已是你朋友!'}, null);
                                     break;

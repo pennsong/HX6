@@ -137,7 +137,7 @@ UserSchema.methods.sendMeetCheck = function() {
     }
     else if (!(this.lastLocationTime > moment(tmpNow).add(-5, 'm').valueOf()))
     {
-        return '请更新当前位置!';
+        return '无法定位最新位置!';
     }
     else if (this.lastMeetCreateTime && !(this.lastMeetCreateTime < moment(tmpNow).add(-30, 's').valueOf())){
         return '距离允许发送新邀请还有:' + (lastMeetCreateTime - moment(tmpNow).add(-30, 's').valueOf())/1000 + '秒';
@@ -163,10 +163,9 @@ UserSchema.methods.getMeetTargets = function(callback) {
 UserSchema.methods.getFriends = function(callback) {
     this.model('Friend')
         .find({
-            $or: [
-                {'creater.username': this.username},
-                {'target.username': this.username}
-            ]
+            users: {
+                $elemMatch: {username: this.username}
+            }
         })
         .exec(callback);
 };
@@ -283,14 +282,16 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
             {
                 this.model('Friend')
                     .create({
-                        creater: {
-                            username: this.username,
-                            nickname: this.nickname
-                        },
-                        target: {
-                            username: doc.username,
-                            nickname: doc.nickname
-                        },
+                        users:[
+                            {
+                                username: this.username,
+                                nickname: this.nickname
+                            },
+                            {
+                                username: doc.username,
+                                nickname: doc.nickname
+                            }
+                        ],
                         messages : []
                     }
                 )
@@ -528,8 +529,8 @@ UserSchema.methods.confirmEachOtherMeet = function(username, meetId, anotherMeet
             //修改对方meet状态为成功
             function(result, next)
             {
-               doc.status = '成功';
-               doc.save(next);
+                doc.status = '成功';
+                doc.save(next);
             }
         ],
         callback

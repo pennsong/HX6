@@ -1,14 +1,10 @@
 var mongoose = require('mongoose');
 
 var FriendSchema = mongoose.Schema({
-    creater: {
+    users: [{
         username: { type: String, required: true },
         nickname: { type: String, required: true }
-    },
-    target: {
-        username: { type: String, required: true },
-        nickname: { type: String, required: true }
-    },
+    }],
     messages : [{
         //username
         from : { type: String, required: true },

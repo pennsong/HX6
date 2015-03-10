@@ -26,6 +26,8 @@
         "moment": "*",
         "nodeunit": "*",
         "should": "*",
+        "chai": "*",
+        "chai-things": "*",
         "express-validator": "*"
     }
 }
