@@ -140,7 +140,7 @@ UserSchema.methods.sendMeetCheck = function() {
         return '无法定位最新位置!';
     }
     else if (this.lastMeetCreateTime && !(this.lastMeetCreateTime < moment(tmpNow).add(-30, 's').valueOf())){
-        return '距离允许发送新邀请还有:' + (lastMeetCreateTime - moment(tmpNow).add(-30, 's').valueOf())/1000 + '秒';
+        return '距离允许发送新邀请还有:' + (this.lastMeetCreateTime - moment(tmpNow).add(-30, 's').valueOf())/1000 + '秒';
     }
     else
     {
@@ -181,7 +181,8 @@ UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothe
                     distanceField: "lastLocation",
                     maxDistance: 500,
                     query: {
-                        specialInfoTime: {$gt: moment().add(-15, 'm').valueOf()},
+                        specialInfoTime: {$gt: new Date(moment().startOf('day'))},
+                        lastLocationTime: {$gt: new Date(moment().add(-5, 'm'))},
                         "specialInfo.sex": sex,
                         username: {$ne: this.username}
                     },
@@ -263,6 +264,8 @@ UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothe
 
 //生成朋友
 UserSchema.methods.createFriend = function(targetUsername, callback) {
+    var self = this;
+
     this.model('User').findOne(
         {
             username: targetUsername
@@ -280,7 +283,7 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
             }
             else
             {
-                this.model('Friend')
+                self.model('Friend')
                     .create({
                         users:[
                             {
@@ -293,9 +296,9 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
                             }
                         ],
                         messages : []
-                    }
-                )
-                    .exec(callback);
+                    },
+                    callback
+                );
             }
         }
     );
@@ -320,21 +323,22 @@ UserSchema.methods.createMeetNo = function(
     clothesColor,
     clothesStyle, callback){
 
+    var self = this;
     async.series({
             lastMeetCreateTime: function(callback)
             {
                 //修改最后发送meet时间
-                this.lastMeetCreateTime = moment().valueOf();
-                this.save(callback);
+                self.lastMeetCreateTime = moment().valueOf();
+                self.save(callback);
             },
             meet: function(callback){
                 //创建待确认meet
-                this.model('Meet').create(
+                self.model('Meet').create(
                     {
                         creater: {
-                            username: this.username,
-                            nickname: this.username,
-                            specialPic: this.specialPic
+                            username: self.username,
+                            nickname: self.username,
+                            specialPic: self.specialPic
                         },
                         status: '待确认',
                         replyLeft: 2,
@@ -343,7 +347,7 @@ UserSchema.methods.createMeetNo = function(
                             address: mapLocAddress,
                             uid: mapLocUid
                         },
-                        personLoc: [this.lastLocation[0], this.lastLocation[1]],
+                        personLoc: [self.lastLocation[0], self.lastLocation[1]],
                         specialInfo: {
                             sex: sex,
                             hair: hair,
@@ -368,25 +372,30 @@ UserSchema.methods.createOrConfirmClickFake = function(callback){
     {
         //如果是则把meet最后发送时间改为now
         this.lastMeetCreateTime = tmpNow;
+        this.lastFakeTime = undefined;
     }
-    this.lastFakeTime = tmpNow;
+    else
+    {
+        this.lastFakeTime = tmpNow;
+    }
     this.save(callback);
 };
 
 //创建meet
 UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, username, callback){
+    var self = this;
     async.waterfall([
             function(next)
             {
                 //更新最近发送meet时间,清空最近选择fake时间
-                this.lastMeetCreateTime = moment().valueOf();
-                this.lastFakeTime = undefined;
-                this.save(next);
+                self.lastMeetCreateTime = moment().valueOf();
+                self.lastFakeTime = undefined;
+                self.save(next);
             },
             function(result, num, next)
             {
                 //查找target
-                this.model('User').findOne({username: username}, next);
+                self.model('User').findOne({username: username}, next);
             },
             function(result, next){
                 if (result == null)
@@ -396,12 +405,12 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
                 else
                 {
                     //创建meet
-                    this.model('Meet').create(
+                    self.model('Meet').create(
                         {
                             creater: {
-                                username: this.username,
-                                nickname: this.username,
-                                specialPic: this.specialPic
+                                username: self.username,
+                                nickname: self.username,
+                                specialPic: self.specialPic
                             },
                             target: {
                                 username: result.username,
@@ -415,7 +424,7 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
                                 address: mapLocAddress,
                                 uid: mapLocUid
                             },
-                            personLoc: [this.lastLocation[0], this.lastLocation[1]],
+                            personLoc: [self.lastLocation[0], self.lastLocation[1]],
                             specialInfo: {
                                 sex: result.specialInfo.sex,
                                 hair: result.specialInfo.hair,

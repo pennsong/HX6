@@ -1,9 +1,114 @@
-//var assert = require("assert");
-//var chai = require("chai");
-//chai.use(require('chai-things'));
-//var should = chai.should();
+var assert = require("assert");
+var chai = require("chai");
+chai.use(require('chai-subset'));
+chai.use(require('chai-things'));
+//chai.use(function(chai, utils) {
+//    utils.addMethod(chai.Assertion.prototype, 'ppContain2', method);
+//
+//    /**
+//     * @param {Object} expected
+//     * @throws {Error}
+//     */
+//    function method(expected) {
+//        var tmpArray = utils.flag(this, 'object');
+//
+//        for (var i=0; i< tmpArray.length; i++)
+//        {
+//            if (tmpArray[i].should.containSubset(expected))
+//            {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//});
 
-var should = require('should');
+chai.use(function(chai, utils) {
+    utils.addMethod(chai.Assertion.prototype, 'ppContain', method);
+
+    function deepFind(obj, path) {
+        var paths = path.split('.')
+            , current = obj
+            , i;
+
+        for (i = 0; i < paths.length; ++i) {
+            if (current[paths[i]] == undefined) {
+                return undefined;
+            } else {
+                current = current[paths[i]];
+            }
+        }
+        return current;
+    }
+
+    /**
+     * @param {Object} expected
+     * @throws {Error}
+     */
+    function method(expected) {
+        var tmpArray = utils.flag(this, 'object');
+
+        for (var i = 0; i < tmpArray.length; i++)
+        {
+            var tmpResult = true;
+            Object.keys(expected).forEach(function(k) {
+                tmpResult = (tmpResult && (deepFind(tmpArray[i], k) == expected[k]));
+            });
+            if (tmpResult)
+            {
+                true.should.equal(true);
+                return;
+            }
+        }
+        assert(false, JSON.stringify(expected) + "应该存在!");
+        return;
+    }
+});
+
+chai.use(function(chai, utils) {
+    utils.addMethod(chai.Assertion.prototype, 'ppNotContain', method);
+
+    function deepFind(obj, path) {
+        var paths = path.split('.')
+            , current = obj
+            , i;
+
+        for (i = 0; i < paths.length; ++i) {
+            if (current[paths[i]] == undefined) {
+                return undefined;
+            } else {
+                current = current[paths[i]];
+            }
+        }
+        return current;
+    }
+
+    /**
+     * @param {Object} expected
+     * @throws {Error}
+     */
+    function method(expected) {
+        var tmpArray = utils.flag(this, 'object');
+
+        for (var i = 0; i < tmpArray.length; i++)
+        {
+            var tmpResult = true;
+            Object.keys(expected).forEach(function(k) {
+                tmpResult = (tmpResult && (deepFind(tmpArray[i], k) == expected[k]));
+            });
+            if (tmpResult)
+            {
+                assert(false, JSON.stringify(expected) + "不应该存在!");
+                return;
+            }
+        }
+        true.should.equal(true);
+        return;
+    }
+});
+var should = chai.should();
+
+//var should = require('should');
 var User = require('../data/models/user');
 var Friend = require('../data/models/friend');
 var Meet = require('../data/models/meet');
@@ -49,10 +154,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : '1.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -70,10 +175,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'a.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -91,10 +196,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'x.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -112,10 +217,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'y.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-6, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-6, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -133,10 +238,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'z.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-1, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -154,10 +259,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'c.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -170,7 +275,7 @@ describe('API测试', function(){
                         sex: '女'
                     },
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf()
                 },
                 {
                     username: 'e',
@@ -189,8 +294,8 @@ describe('API测试', function(){
                     specialPic : 'e.jpg',
                     specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(-1, 'm').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf()
-                    //lastMeetCreateTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf()
+                    //lastMeetCreateTime : moment(testStartTime).add(-1, 's').valueOf()
                     //lastFakeTime : Date
                 },
                 {
@@ -203,7 +308,7 @@ describe('API测试', function(){
                         sex: '女'
                     },
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf()
                 },
                 {
                     username: 'g',
@@ -215,7 +320,7 @@ describe('API测试', function(){
                         sex: '女'
                     },
                     lastLocation : farPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf()
                 },
                 {
                     username: 'h',
@@ -232,9 +337,9 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'h.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : farPoint,
-                    lastLocationTime : testStartTime.add(-6, 'm').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-6, 'm').valueOf()
                 },
                 {
                     username: 'i',
@@ -251,11 +356,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'i.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf(),
-                    lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf(),
+                    lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'j',
@@ -272,11 +377,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'j.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
-                    //lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
+                    //lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'k',
@@ -293,11 +398,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'k.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
-                    //lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
+                    //lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'l',
@@ -309,9 +414,9 @@ describe('API测试', function(){
                         sex: '女'
                     },
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
-                    //lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
+                    //lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'm',
@@ -328,11 +433,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'm.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
-                    //lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
+                    //lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'n',
@@ -349,11 +454,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'n.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
-                    //lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
+                    //lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 },
                 {
                     username: 'o',
@@ -370,10 +475,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'o.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-6, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-6, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                 },
                 {
                     username: 'p',
@@ -390,10 +495,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'p.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-6, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-6, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                 },
                 {
                     username: 'q',
@@ -410,10 +515,10 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'q.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf()
                 },
                 {
                     username: 'r',
@@ -430,11 +535,11 @@ describe('API测试', function(){
                         clothesStyle : '纯色'
                     },
                     specialPic : 'r.jpg',
-                    specialInfoTime : moment(moment().format('YYYY-MM-DD')).add(1, 's').valueOf(),
+                    specialInfoTime : moment().startOf('day').add(1, 's').valueOf(),
                     lastLocation : oriPoint,
-                    lastLocationTime : testStartTime.add(-1, 'm').valueOf(),
-                    lastMeetCreateTime : testStartTime.add(-31, 's').valueOf(),
-                    lastFakeTime : testStartTime.add(-1, 's').valueOf()
+                    lastLocationTime : moment(testStartTime).add(-1, 'm').valueOf(),
+                    lastMeetCreateTime : moment(testStartTime).add(-31, 's').valueOf(),
+                    lastFakeTime : moment(testStartTime).add(-1, 's').valueOf()
                 }
             ];
 
@@ -879,52 +984,6 @@ describe('API测试', function(){
                     personLoc : oriPoint,
                     specialInfo: {
                         sex: '女',
-                        hair: '辫子/盘发',
-                        glasses : '无',
-                        clothesType : '大衣',
-                        clothesColor : '白',
-                        clothesStyle : '纯色'
-                    }
-                },
-                {
-                    creater: {
-                        username: 'n',
-                        nickname: 'nnickname',
-                        specialPic: 'n.jpg'
-                    },
-                    status : '待确认',
-                    replyLeft : 2,
-                    mapLoc : {
-                        name : '北京银行(安华路支行)',
-                        address : '北京市朝阳区外馆东街51号商业楼首层0102',
-                        uid : '110941faff26cbcd4557261c'
-                    },
-                    personLoc : oriPoint,
-                    specialInfo: {
-                        sex: '女',
-                        hair: '辫子/盘发',
-                        glasses : '无',
-                        clothesType : '大衣',
-                        clothesColor : '白',
-                        clothesStyle : '纯色'
-                    }
-                },
-                {
-                    creater: {
-                        username: 'n',
-                        nickname: 'nnickname',
-                        specialPic: 'n.jpg'
-                    },
-                    status : '待确认',
-                    replyLeft : 2,
-                    mapLoc : {
-                        name : '北京银行(安华路支行)',
-                        address : '北京市朝阳区外馆东街51号商业楼首层0102',
-                        uid : '110941faff26cbcd4557261c'
-                    },
-                    personLoc : oriPoint,
-                    specialInfo: {
-                        sex: '女',
                         hair: '竖起来（包括光头）',
                         glasses : '无',
                         clothesType : '大衣',
@@ -1325,29 +1384,23 @@ describe('API测试', function(){
                     im.statusCode.should.equal(200);
                     res.ppResult.should.equal('ok');
                     //meet
-                    res.ppData.meets.should.match(function(it){
-                        for (var i = 0; i < it.length; i++){
-                            if (it[i].creater.username == '1' && it[i].target.username == 'q')
-                            {
-                                return true;
-                            }
+                    res.ppData.meets.should.ppContain(
+                        {
+                            'creater.username' : '1',
+                            'target.username' : 'q'
                         }
-                        return false;
-                    });
+                    );
                     //friend
                     res.ppData.friends.length.should.equal(1);
-                    res.ppData.friends.should.match(function(it){
-                        for (var i = 0; i < it.length; i++){
-                            for (var j=0; j< it[i].users.length; j++)
-                            {
-                                if (it[i].users[j].username == '1')
-                                {
-                                    return true;
-                                }
-                            }
+                    var tmpFriendFind = false;
+                    for (var i = 0; i < res.ppData.friends.length; i++)
+                    {
+                        if (res.ppData.friends[i].users.should.ppContain({'username': '1'})){
+                            tmpFriendFind = true;
+                            break;
                         }
-                        return false;
-                    });
+                    }
+                    tmpFriendFind.should.equal(true);
                     done(err);
                 }
             );
@@ -1537,7 +1590,7 @@ describe('API测试', function(){
                 function(err, im, res){
                     im.statusCode.should.equal(400);
                     res.ppResult.should.equal('err');
-                    res.ppMsg.should.match(/^'距离允许发送新邀请还有'/);
+                    res.ppMsg.should.match(/^距离允许发送新邀请还有/);
                     done(err);
                 }
             );
@@ -1749,15 +1802,15 @@ describe('API测试', function(){
                 function(err, im, res){
                     im.statusCode.should.equal(200);
                     res.ppResult.should.equal('ok');
-                    res.ppData.indexOf({username: 'z', specialPic: 'z.jpg'}).should.gt(-1);
-                    res.ppData.indexOf({username: 'c', specialPic: 'c.jpg'}).should.gt(-1);
-                    res.ppData.indexOf({username: 'x', specialPic: 'x.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'y', specialPic: 'y.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'h', specialPic: 'h.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'q', specialPic: 'q.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'd', specialPic: 'd.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'e', specialPic: 'e.jpg'}).should.equal(-1);
-                    res.ppData.indexOf({username: 'k', specialPic: 'k.jpg'}).should.equal(-1);
+                    res.ppData.should.ppContain({username: 'z', specialPic: 'z.jpg'});
+                    res.ppData.should.ppContain({username: 'c', specialPic: 'c.jpg'});
+                    res.ppData.should.ppNotContain({username: 'x', specialPic: 'x.jpg'});
+                    res.ppData.should.ppNotContain({username: 'y', specialPic: 'y.jpg'});
+                    res.ppData.should.ppNotContain({username: 'h', specialPic: 'h.jpg'});
+                    res.ppData.should.ppNotContain({username: 'q', specialPic: 'q.jpg'});
+                    res.ppData.should.ppNotContain({username: 'd', specialPic: 'd.jpg'});
+                    res.ppData.should.ppNotContain({username: 'e', specialPic: 'e.jpg'});
+                    res.ppData.should.ppNotContain({username: 'k', specialPic: 'k.jpg'});
                     done(err);
                 }
             );
@@ -1835,33 +1888,46 @@ describe('API测试', function(){
         });
 
         it('[成功找到符合条件的target]', function(done){
-            Meet.findOne({'creater.username': 'n', 'target.username': 'z'}).exec(function(err, doc){
-                if (!err)
+            Meet.findOne(
                 {
-                    request(
-                        {
-                            url: serverRoot + "users/confirmMeetSearchTarget",
-                            method: 'POST',
-                            json: true,
-                            body: {
-                                token: 'nt',
-                                meetId: doc._id
+                    'creater.username': 'n',
+                    'specialInfo.sex': '女',
+                    'specialInfo.hair': '辫子/盘发',
+                    'specialInfo.glasses' : '无',
+                    'specialInfo.clothesType' : '大衣',
+                    'specialInfo.clothesColor' : '白',
+                    'specialInfo.clothesStyle' : '纯色',
+                    status: '待确认'
+                }
+            ).exec(function(err, doc){
+                    if (!err)
+                    {
+                        assert(doc !== null, 'doc要存在');
+                        request(
+                            {
+                                url: serverRoot + "users/confirmMeetSearchTarget",
+                                method: 'POST',
+                                json: true,
+                                body: {
+                                    token: 'nt',
+                                    meetId: doc._id
+                                }
+                            },
+                            function(err, im, res){
+                                im.statusCode.should.equal(200);
+                                res.ppResult.should.equal('ok');
+                                res.ppData.should.ppContain({username: 'z', specialPic: 'z.jpg'});
+                                res.ppData.should.ppContain({username: 'c', specialPic: 'c.jpg'});
+                                done(err);
                             }
-                        },
-                        function(err, im, res){
-                            im.statusCode.should.equal(200);
-                            res.ppResult.should.equal('ok');
-                            res.ppData.indexOf({username: 'z', specialPic: 'z.jpg'}).should.gt(-1);
-                            res.ppData.indexOf({username: 'c', specialPic: 'c.jpg'}).should.gt(-1);
-                            done(err);
-                        }
-                    );
+                        );
+                    }
+                    else
+                    {
+                        done(err);
+                    }
                 }
-                else
-                {
-                    done(err);
-                }
-            });
+            );
         });
 
         it('[不属于自己的meetId无法查找]', function(done){
@@ -1901,7 +1967,7 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'nt',
-                        meetId: 'abc'
+                        meetId: '55001c6180202da9e391d8b0'
                     }
                 },
                 function(err, im, res){
@@ -1969,11 +2035,11 @@ describe('API测试', function(){
                     Meet.findOne({'creater.username': 'a', status: '待确认', 'mapLoc.name': 'tname'}).exec(function(err, doc){
                         if (!err)
                         {
-                            doc.should.be.ok;
+                            assert(doc !== null, 'doc要存在');
                             User.findOne({username: 'a'}).exec(function(err, doc){
                                 if (!err)
                                 {
-                                    doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                                    doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
                                     done();
                                 }
                                 else
@@ -2009,8 +2075,8 @@ describe('API测试', function(){
                     User.findOne({username: 'i'}).exec(function(err, doc){
                         if (!err)
                         {
-                            doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
-                            doc.lastFakeTime.should.not.be.ok;
+                            doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
+                            should.not.exist(doc.lastFakeTime);
                             done();
                         }
                         else
@@ -2038,7 +2104,7 @@ describe('API测试', function(){
                     User.findOne({username: 'j'}).exec(function(err, doc){
                         if (!err)
                         {
-                            doc.lastFakeCreateTime.should.gt(moment().add(-3, 's'));
+                            doc.lastFakeTime.should.above(moment().add(-3, 's'));
                             done();
                         }
                         else
@@ -2055,7 +2121,7 @@ describe('API测试', function(){
         it('[输入不存在的username,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2074,7 +2140,7 @@ describe('API测试', function(){
         it('[输入自己的username,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2093,7 +2159,7 @@ describe('API测试', function(){
         it('[不输入username,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2111,7 +2177,7 @@ describe('API测试', function(){
         it('[未填写自己的specialInfo,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2131,7 +2197,7 @@ describe('API测试', function(){
         it('[自己的specialInfo过期,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2151,7 +2217,7 @@ describe('API测试', function(){
         it('[最近5分钟无上传最新位置,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2171,7 +2237,7 @@ describe('API测试', function(){
         it('[最近30s有发送meet记录,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2182,7 +2248,7 @@ describe('API测试', function(){
                 function(err, im, res){
                     im.statusCode.should.equal(400);
                     res.ppResult.should.equal('err');
-                    res.ppMsg.should.match(/^'距离允许发送新邀请还有'/);
+                    res.ppMsg.should.match(/^距离允许发送新邀请还有/);
                     done(err);
                 }
             );
@@ -2191,7 +2257,7 @@ describe('API测试', function(){
         it('[是已有朋友,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2211,7 +2277,7 @@ describe('API测试', function(){
         it('[发送对象是待回复的meet中的目标,无法创建]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2231,7 +2297,7 @@ describe('API测试', function(){
         it('[如果是互发, 则生成朋友并修改对方meet状态为"成功"]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2250,7 +2316,7 @@ describe('API测试', function(){
                         }
                     ).exec(function(err, doc){
                             if (!err){
-                                doc.should.be.ok;
+                                assert(doc !== null, 'doc要存在');
                                 Meet.findOne({'creater.username': 'k', 'target.username': 'a'}).exec(
                                     function(err, doc)
                                     {
@@ -2277,7 +2343,7 @@ describe('API测试', function(){
         it('[成功生成meet]', function(done){
             request(
                 {
-                    url: serverRoot + "users/createOrConfirmClickTarget",
+                    url: serverRoot + "users/createMeetClickTarget",
                     method: 'POST',
                     json: true,
                     body: {
@@ -2296,7 +2362,7 @@ describe('API测试', function(){
 
                                 User.findOne({username: 'i'}).exec(function(err, doc){
                                     if (!err) {
-                                        doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                                        doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
                                         doc.lastFakeTime.should.not.be.ok;
                                         done();
                                     }
@@ -2337,7 +2403,7 @@ describe('API测试', function(){
                     res.ppResult.should.equal('ok');
                     User.findOne({username: 'l'}).exec(function(err, doc){
                         if (!err) {
-                            doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                            doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
                             doc.specialInfo.hair.should.equal('辫子/盘发');
                             doc.specialInfo.glasses.should.equal('无');
                             doc.specialInfo.clothesType.should.equal('大衣');
@@ -2375,7 +2441,7 @@ describe('API测试', function(){
                     res.ppResult.should.equal('ok');
                     User.findOne({username: 'a'}).exec(function(err, doc){
                         if (!err) {
-                            doc.lastMeetCreateTime.should.gt(moment().add(-3, 's'));
+                            doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
                             doc.specialInfo.hair.should.equal('躺下');
                             doc.specialInfo.glasses.should.equal('有');
                             doc.specialInfo.clothesType.should.equal('长袖衬衫');
@@ -3099,7 +3165,7 @@ describe('API测试', function(){
                                         }
                                     ).exec(function(err, doc){
                                             if (!err){
-                                                doc.should.be.ok;
+                                                assert(doc !== null, 'doc要存在');
                                                 done();
                                             }
                                             else

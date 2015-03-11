@@ -28,6 +28,8 @@
         "should": "*",
         "chai": "*",
         "chai-things": "*",
+        "chai-subset": "*",
+        "assertion": "*",
         "express-validator": "*"
     }
 }

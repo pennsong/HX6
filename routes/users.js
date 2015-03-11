@@ -287,6 +287,9 @@ router.post('/createMeetSearchTarget', function(req, res) {
         }
         else
         {
+//            console.log(targets1);
+//            console.log(targets2);
+//            console.log(targets3);
             targets3 = targets3.filter( function( item ) {
                 return (targets1.indexOf( item.username ) < 0 && targets2.indexOf( item.username ));
             });
@@ -307,6 +310,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                         targets1 = docs.map(function(item){
                             return item.target.username;
                         });
+                        callback(null, null);
                     }
                 });
             },
@@ -321,6 +325,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                         targets2 = docs.map(function(item){
                             return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
+                        callback(null, null);
                     }
                 });
             },
@@ -333,6 +338,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                     }
                     else {
                         targets3 = docs;
+                        callback(null, null);
                     }
                 });
             }
@@ -382,6 +388,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                         targets1 = docs.map(function(item){
                             return item.target.username;
                         });
+                        callback(null, null);
                     }
                 });
             },
@@ -397,12 +404,13 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                         targets2 = docs.map(function(item){
                             return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
+                        callback(null, null);
                     }
                 });
             },
             function(callback){
                 //找对应meet
-                Meet.findOne({id: req.body.meetId}).exec(function(err, doc){
+                Meet.findOne({_id: req.body.meetId, 'creater.username': req.user.username, status: '待确认'}).exec(function(err, doc){
                         if (err)
                         {
                             callback(err, null);
@@ -424,7 +432,15 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                                     doc.specialInfo.clothesColor,
                                     doc.specialInfo.clothesStyle,
                                     function(err, docs){
-                                        targets3 = docs;
+                                        if (err)
+                                        {
+                                            callback(err, null);
+                                        }
+                                        else
+                                        {
+                                            targets3 = docs;
+                                            callback(null, null);
+                                        }
                                     }
                                 );
                             }
@@ -500,10 +516,10 @@ router.post('/createMeetClickTarget', function(req, res) {
         return;
     }
 
-    var tmpStr = req.user.sendMeetCheck();
-    if (tmpStr != 'ok')
+    var ppMsg = req.user.sendMeetCheck();
+    if (ppMsg != 'ok')
     {
-        res.status(400).send({err: tmpStr});
+        res.status(400).json({ ppResult: 'err', ppMsg: ppMsg });
         return;
     }
 
@@ -517,15 +533,16 @@ router.post('/createMeetClickTarget', function(req, res) {
                     }
                     else
                     {
-                        for(var item in docs)
+                        for(var i = 0; i < docs.length; i++)
                         {
-                            if (item.target.username == username)
+                            if (docs[i].target.username == req.body.username)
                             {
                                 //已对此人发过邀请
                                 callback({ppMsg: '已对此人发过邀请!'}, null);
-                                break;
+                                return;
                             }
                         }
+                        callback(null, null);
                     }
                 });
             },
@@ -538,15 +555,16 @@ router.post('/createMeetClickTarget', function(req, res) {
                     }
                     else
                     {
-                        for(var item in docs)
+                        for(var i = 0; i < docs.length; i++)
                         {
-                            if (item.users[0].username == username || item.users[1].username == username)
+                            if (docs[i].users[0].username == req.body.username || docs[i].users[1].username == req.body.username)
                             {
                                 //此人已是你好友
                                 callback({ppMsg: '此人已是你好友!'}, null);
-                                break;
+                                return;
                             }
                         }
+                        callback(null, null);
                     }
                 });
             }
@@ -596,7 +614,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                         else
                         {
                             //互发,生成朋友并修改对方meet状态为成功
-                            user.createFriend(req.user.username, function(err, result){
+                            req.user.createFriend(req.user.username, function(err, result){
                                 if (err)
                                 {
                                     res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
