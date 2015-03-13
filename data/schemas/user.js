@@ -287,8 +287,8 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
                     .create({
                         users:[
                             {
-                                username: this.username,
-                                nickname: this.nickname
+                                username: self.username,
+                                nickname: self.nickname
                             },
                             {
                                 username: doc.username,
@@ -409,15 +409,15 @@ UserSchema.methods.createMeet = function(mapLocName, mapLocUid, mapLocAddress, u
                         {
                             creater: {
                                 username: self.username,
-                                nickname: self.username,
+                                nickname: self.nickname,
                                 specialPic: self.specialPic
                             },
                             target: {
                                 username: result.username,
-                                nickname: result.username,
+                                nickname: result.nickname,
                                 specialPic: result.specialPic
                             },
-                            status: '待确认',
+                            status: '待回复',
                             replyLeft: 2,
                             mapLoc: {
                                 name: mapLocName,
@@ -491,17 +491,18 @@ UserSchema.methods.confirmMeet = function(username, meetId, callback){
 
 //确认互发meet
 UserSchema.methods.confirmEachOtherMeet = function(username, meetId, anotherMeet, callback){
+    var self = this;
     async.waterfall([
             //清空最近选择fake时间
             function(next)
             {
-                this.lastFakeTime = undefined;
-                this.save(next);
+                self.lastFakeTime = undefined;
+                self.save(next);
             },
             function(result, num, next)
             {
                 //查找target
-                this.model('User').findOne({username: username}, next);
+                self.model('User').findOne({username: username}, next);
             },
             //己方meet添加target为对方并修改状态为'成功'
             function(result, next){
@@ -512,9 +513,9 @@ UserSchema.methods.confirmEachOtherMeet = function(username, meetId, anotherMeet
                 else
                 {
                     //更新meet target
-                    this.model('Meet').findOneAndUpdate(
+                    self.model('Meet').findOneAndUpdate(
                         {
-                            id: meetId
+                            _id: meetId
                         },
                         {
                             $set:{
@@ -555,9 +556,10 @@ UserSchema.methods.replyMeetClickTarget = function(username, meetId, callback){
             {
                 self.model('Meet').findOneAndUpdate(
                     {
-                        id: meetId,
+                        _id: meetId,
                         'target.username': self.username,
-                        status: '待回复'
+                        status: '待回复',
+                        'creater.username': username
                     },
                     {
                         $set:{
@@ -570,7 +572,7 @@ UserSchema.methods.replyMeetClickTarget = function(username, meetId, callback){
             function(result, next){
                 if (result == null)
                 {
-                    next({ppMsg: '没有找到对应目标!'}, null);
+                    next({ppMsg: '没有对应meet!'}, null);
                 }
                 //生成朋友
                 else

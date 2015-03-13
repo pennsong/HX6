@@ -728,34 +728,6 @@ describe('API测试', function(){
                 },
                 {
                     creater: {
-                        username: 'a',
-                        nickname: 'anickname',
-                        specialPic: 'a.jpg'
-                    },
-                    target: {
-                        username: 'k',
-                        nickname: 'knickname',
-                        specialPic: 'k.jpg'
-                    },
-                    status : '待回复',
-                    replyLeft : 1,
-                    mapLoc : {
-                        name : '北京银行(安华路支行)',
-                        address : '北京市朝阳区外馆东街51号商业楼首层0102',
-                        uid : '110941faff26cbcd4557261c'
-                    },
-                    personLoc : oriPoint
-//                    specialInfo: {
-//                        sex: { type: String, enum: ['男', '女'], required: true },
-//                        hair  : { type: String, required: true },
-//                        glasses : { type: String, required: true },
-//                        clothesType : { type: String, required: true },
-//                        clothesColor : { type: String, required: true },
-//                        clothesStyle : { type: String, required: true }
-//                    }
-                },
-                {
-                    creater: {
                         username: 'z',
                         nickname: 'znickname',
                         specialPic: 'z.jpg'
@@ -862,34 +834,6 @@ describe('API测试', function(){
 //                        hair  : { type: String, required: true },
 //                        glasses : { type: String, required: true },
 //                        clothesType : { type: String, required: true },x
-//                        clothesColor : { type: String, required: true },
-//                        clothesStyle : { type: String, required: true }
-//                    }
-                },
-                {
-                    creater: {
-                        username: 'x',
-                        nickname: 'xnickname',
-                        specialPic: 'x.jpg'
-                    },
-                    target: {
-                        username: 'i',
-                        nickname: 'inickname',
-                        specialPic: 'i.jpg'
-                    },
-                    status : '待回复',
-                    replyLeft : 1,
-                    mapLoc : {
-                        name : '北京银行(安华路支行)',
-                        address : '北京市朝阳区外馆东街51号商业楼首层0102',
-                        uid : '110941faff26cbcd4557261c'
-                    },
-                    personLoc : oriPoint
-//                    specialInfo: {
-//                        sex: { type: String, enum: ['男', '女'], required: true },
-//                        hair  : { type: String, required: true },
-//                        glasses : { type: String, required: true },
-//                        clothesType : { type: String, required: true },
 //                        clothesColor : { type: String, required: true },
 //                        clothesStyle : { type: String, required: true }
 //                    }
@@ -1810,7 +1754,6 @@ describe('API测试', function(){
                     res.ppData.should.ppNotContain({username: 'q', specialPic: 'q.jpg'});
                     res.ppData.should.ppNotContain({username: 'd', specialPic: 'd.jpg'});
                     res.ppData.should.ppNotContain({username: 'e', specialPic: 'e.jpg'});
-                    res.ppData.should.ppNotContain({username: 'k', specialPic: 'k.jpg'});
                     done(err);
                 }
             );
@@ -2182,7 +2125,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'dt',
-                        username: 'c'
+                        username: 'c',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2202,7 +2148,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'et',
-                        username: 'c'
+                        username: 'c',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2222,7 +2171,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'yt',
-                        username: 'c'
+                        username: 'c',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2242,7 +2194,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'zt',
-                        username: 'c'
+                        username: 'c',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2262,7 +2217,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'at',
-                        username: 'x'
+                        username: 'x',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2282,7 +2240,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'at',
-                        username: 'q'
+                        username: 'q',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2302,7 +2263,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'at',
-                        username: 'k'
+                        username: 'k',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2348,7 +2312,10 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'it',
-                        username: 'x'
+                        username: 'x',
+                        mapLocName: '北京银行(安华路支行)',
+                        mapLocAddress: '北京市朝阳区外馆东街51号商业楼首层0102',
+                        mapLocUid: '110941faff26cbcd4557261c'
                     }
                 },
                 function(err, im, res){
@@ -2363,7 +2330,7 @@ describe('API测试', function(){
                                 User.findOne({username: 'i'}).exec(function(err, doc){
                                     if (!err) {
                                         doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
-                                        doc.lastFakeTime.should.not.be.ok;
+                                        should.not.exist(doc.lastFakeTime);
                                         done();
                                     }
                                     else{
@@ -2403,7 +2370,7 @@ describe('API测试', function(){
                     res.ppResult.should.equal('ok');
                     User.findOne({username: 'l'}).exec(function(err, doc){
                         if (!err) {
-                            doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
+                            doc.specialInfoTime.should.above(moment().add(-3, 's'));
                             doc.specialInfo.hair.should.equal('辫子/盘发');
                             doc.specialInfo.glasses.should.equal('无');
                             doc.specialInfo.clothesType.should.equal('大衣');
@@ -2441,7 +2408,7 @@ describe('API测试', function(){
                     res.ppResult.should.equal('ok');
                     User.findOne({username: 'a'}).exec(function(err, doc){
                         if (!err) {
-                            doc.lastMeetCreateTime.should.above(moment().add(-3, 's'));
+                            doc.specialInfoTime.should.above(moment().add(-3, 's'));
                             doc.specialInfo.hair.should.equal('躺下');
                             doc.specialInfo.glasses.should.equal('有');
                             doc.specialInfo.clothesType.should.equal('长袖衬衫');
@@ -2641,7 +2608,7 @@ describe('API测试', function(){
                 function(err, im, res){
                     im.statusCode.should.equal(200);
                     res.ppResult.should.equal('ok');
-                    res.ppData.should.not.be.ok;
+                    should.not.exist(res.ppData);
                     done(err);
                 }
             );
@@ -2660,7 +2627,7 @@ describe('API测试', function(){
                 function(err, im, res){
                     im.statusCode.should.equal(200);
                     res.ppResult.should.equal('ok');
-                    res.ppData.should.not.be.ok;
+                    should.not.exist(res.ppData);
                     done(err);
                 }
             );
@@ -2710,7 +2677,7 @@ describe('API测试', function(){
                     json: true,
                     body: {
                         token: 'qt',
-                        meetId: 'abc',
+                        meetId: '55011385307f493d01f69504',
                         sex: '女',
                         hair: '辫子/盘发',
                         glasses : '无',
@@ -2797,7 +2764,7 @@ describe('API测试', function(){
                             method: 'POST',
                             json: true,
                             body: {
-                                token: 'pt',
+                                token: 'ot',
                                 meetId: doc._id,
                                 sex: '女',
                                 hair: '辫子/盘发',
@@ -3076,7 +3043,7 @@ describe('API测试', function(){
                             body: {
                                 token: 'qt',
                                 username: 'z',
-                                meetId: doc.meetId
+                                meetId: doc._id
                             }
                         },
                         function(err, im, res){
@@ -3123,7 +3090,7 @@ describe('API测试', function(){
                     body: {
                         token: 'pt',
                         username: 'z',
-                        meetId: 'abc'
+                        meetId: '5502560c40db57d2383fe139'
                     }
                 },
                 function(err, im, res){
@@ -3147,7 +3114,7 @@ describe('API测试', function(){
                             body: {
                                 token: 'pt',
                                 username: 'z',
-                                meetId: doc.meetId
+                                meetId: doc._id
                             }
                         },
                         function(err, im, res){
@@ -3202,13 +3169,13 @@ describe('API测试', function(){
                             body: {
                                 token: 'pt',
                                 username: 'y',
-                                meetId: doc.meetId
+                                meetId: doc._id
                             }
                         },
                         function(err, im, res){
                             im.statusCode.should.equal(400);
                             res.ppResult.should.equal('err');
-                            res.ppMsg.should.equal('不要调戏我!');
+                            res.ppMsg.should.equal('没有对应meet!');
                             done(err);
                         }
                     );

@@ -51,7 +51,13 @@ function requireAuthentication(req, res, next){
                 }
                 else
                 {
+                    var tmpSex = doc.specialInfo.sex;
+                    if (!(doc.specialInfoTime) || doc.specialInfoTime < moment().startOf('day'))
+                    {
+                        doc.specialInfo = undefined;
+                    }
                     req.user = doc;
+                    req.user.sex = tmpSex;
                     next();
                 }
             }
@@ -509,6 +515,9 @@ router.post('/createOrConfirmClickFake', function(req, res) {
 
 router.post('/createMeetClickTarget', function(req, res) {
     req.assert('username', 'required').notEmpty();
+    req.assert('mapLocName', 'required').notEmpty();
+    req.assert('mapLocUid', 'required').notEmpty();
+    req.assert('mapLocAddress', 'required').notEmpty();
 
     var errors = req.validationErrors();
     if (errors) {
@@ -603,18 +612,18 @@ router.post('/createMeetClickTarget', function(req, res) {
                                 function(err, doc){
                                     if (err)
                                     {
-                                        res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
+                                        res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : "创建邀请失败!", err: err });
                                     }
                                     else
                                     {
-                                        res.status(400).json({ ppResult: 'ok', ppData: doc });
+                                        res.json({ ppResult: 'ok', ppData: doc });
                                     }
                                 });
                         }
                         else
                         {
                             //互发,生成朋友并修改对方meet状态为成功
-                            req.user.createFriend(req.user.username, function(err, result){
+                            req.user.createFriend(req.body.username, function(err, result){
                                 if (err)
                                 {
                                     res.status(400).json({ ppResult: 'err', ppMsg: "创建邀请失败!", err: err });
@@ -629,7 +638,7 @@ router.post('/createMeetClickTarget', function(req, res) {
                                         }
                                         else
                                         {
-                                            res.status(400).json({ ppResult: 'ok'});
+                                            res.json({ ppResult: 'ok'});
                                         }
                                     });
                                 }
@@ -775,7 +784,7 @@ router.post('/updateSpecialInfo', function(req, res) {
     req.assert('clothesType', 'required').notEmpty();
     req.assert('clothesColor', 'required').notEmpty();
     req.assert('clothesStyle', 'required').notEmpty();
-    req.assert('SpecialPic', 'required').notEmpty();
+    req.assert('specialPic', 'required').notEmpty();
 
     var errors = req.validationErrors();
     if (errors) {
@@ -788,6 +797,9 @@ router.post('/updateSpecialInfo', function(req, res) {
     req.user.specialInfo.clothesType = req.body.clothesType;
     req.user.specialInfo.clothesColor = req.body.clothesColor;
     req.user.specialInfo.clothesStyle = req.body.clothesStyle;
+    req.user.specialInfo.sex = req.user.sex;
+    req.user.specialPic = req.body.specialPic;
+    req.user.specialInfoTime = moment().valueOf();
 
     req.user.save(function(err){
         if (err)
@@ -802,7 +814,14 @@ router.post('/updateSpecialInfo', function(req, res) {
 });
 
 router.post('/getSpecialInfo', function(req, res) {
-    res.json({ppResult: 'ok', ppData: {specialInfo: req.user.specialInfo, specialPic: req.user.specialPic}});
+    if (req.user.specialInfo.hair)
+    {
+        res.json({ppResult: 'ok', ppData: {specialInfo: req.user.specialInfo, specialPic: req.user.specialPic}});
+    }
+    else
+    {
+        res.json({ppResult: 'ok'});
+    }
 });
 
 router.post('/uploadSpecialPic', function(req, res) {
@@ -834,7 +853,7 @@ router.post('/replyMeetSearchTarget', function(req, res) {
     async.waterfall([
             function(next){
                 //根据meetId检查是否当前用户是此meet的target
-                Meet.findOne({id: req.body.meetId}).exec(function(err, doc){
+                Meet.findOne({_id: req.body.meetId}).exec(function(err, doc){
                     if (err)
                     {
                         next(err, null);
@@ -843,13 +862,13 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                     {
                         if (doc == null)
                         {
-                            next({ppMsg: 'meetId错误!'}, null);
+                            next({ppMsg: '没有对应meet!'}, null);
                         }
                         else
                         {
                             if (doc.target.username != req.user.username)
                             {
-                                next({ppMsg: 'meetId错误!'}, null);
+                                next({ppMsg: '没有对应meet!'}, null);
                             }
                             else
                             {
@@ -860,33 +879,43 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                                 else
                                 {
                                     doc.replyLeft--;
-                                    doc.save(next);
+                                    doc.save(function(err, doc, num){
+                                        if (err)
+                                        {
+                                            next(err, null);
+                                        }
+                                        else
+                                        {
+                                            //取得meet creater信息
+                                            User.findOne({username: doc.creater.username}).exec(next);
+                                        }
+                                    });
                                 }
                             }
                         }
                     }
                 });
             },
-            //看meet中的特征信息和提供的回复特征信息是否匹配
+            //看meet creater中的特征信息和提供的回复特征信息是否匹配
             function(result, next){
                 var score = 0;
-                if (result.specialInfo.hair != req.body.hair)
+                if (result.specialInfo.hair == req.body.hair)
                 {
                     score++;
                 }
-                if (result.specialInfo.glasses != req.body.glasses)
+                if (result.specialInfo.glasses == req.body.glasses)
                 {
                     score++;
                 }
-                if (result.specialInfo.clothesType != req.body.clothesType)
+                if (result.specialInfo.clothesType == req.body.clothesType)
                 {
                     score++;
                 }
-                if (result.specialInfo.clothesColor != req.body.clothesColor)
+                if (result.specialInfo.clothesColor == req.body.clothesColor)
                 {
                     score++;
                 }
-                if (result.specialInfo.clothesStyle != req.body.clothesStyle)
+                if (result.specialInfo.clothesStyle == req.body.clothesStyle)
                 {
                     score++;
                 }
@@ -894,14 +923,14 @@ router.post('/replyMeetSearchTarget', function(req, res) {
                 {
                     score = 0;
                 }
-
-                if (score <= 4){
-                    next({ppMsg: '特征信息不匹配!'}, null);
+                if (score < 4){
+                    res.json({ ppResult: 'ok', ppMsg: '特征信息不匹配!' });
+                    return;
                 }
                 //找到creater的SpecialPic, 并加上3张fake图片
                 else
                 {
-                    var tmpResult = [{username: result.creater.username, specialPic: result.creater.specialPic}];
+                    var tmpResult = [{username: result.username, specialPic: result.specialPic}];
                     for (var i = 0; i < 4; i++)
                     {
                         tmpResult.push({username: "fake", specialPic: "fake.png"});
