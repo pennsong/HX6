@@ -212,6 +212,32 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
+router.post('/getMeets', function(req, res) {  
+    req.user.getMeets(function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            res.json({ppResult: 'ok', ppData: result});
+        }
+    });
+});
+
+router.post('/getFriends', function(req, res) {  
+    req.user.getFriends(function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            res.json({ppResult: 'ok', ppData: result});
+        }
+    });
+});
+
 router.post('/updateLocation', function(req, res) {
     req.assert('lng', 'required').notEmpty();
     req.assert('lat', 'required').notEmpty();

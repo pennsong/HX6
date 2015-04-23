@@ -30,6 +30,7 @@
         "chai-things": "*",
         "chai-subset": "*",
         "assertion": "*",
-        "express-validator": "*"
+        "express-validator": "*",
+        "async": "*"
     }
 }
