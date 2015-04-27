@@ -29,6 +29,7 @@ function parseError(errors){
 }
 
 function requireAuthentication(req, res, next){
+    console.log(req);
     req.assert('token', 'required').notEmpty();
 
     var errors = req.validationErrors();
@@ -857,7 +858,7 @@ router.post('/uploadSpecialPic', function(req, res) {
     }
     else
     {
-        res.json({specialPic: req.files.specialPic.name});
+        res.json({ppResult: req.files.specialPic.name});
     }
 });
 

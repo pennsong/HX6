@@ -53,6 +53,15 @@ UserSchema.statics.login = function(username, password, cid, callback){
                 //用户名密码正确
                 else {
                     tmpUser = result;
+                    loginResult.user = {
+                        username: tmpUser.username,
+                        nickname: tmpUser.nickname,
+                        specialInfo: tmpUser.specialInfo,
+                        specialPic: tmpUser.specialPic,
+                        specialPicDisplay: tmpUser.specialPic,
+                        specialInfoTime: tmpUser.specialInfoTime
+                    };
+
                     //清空同台设备绑定的其他用户
                     self.findOneAndUpdate(
                         {
@@ -77,7 +86,7 @@ UserSchema.statics.login = function(username, password, cid, callback){
                 );
                 self.update(
                     {
-                        id: tmpUser.id
+                        _id: tmpUser._id
                     },
                     {
                         $set:
@@ -117,13 +126,47 @@ UserSchema.statics.login = function(username, password, cid, callback){
 
 UserSchema.methods.getMeets = function(callback) {
     return this.model('Meet')
-        .find({
-            $or: [
-                {'creater.username': this.username},
-                {'target.username': this.username}
-            ],
-            status: {$ne:"成功"}
-        })
+        .aggregate([
+            {
+                $match:
+                {
+                    $or: [
+                        {'creater.username': this.username},
+                        {'target.username': this.username}
+                    ],
+                    status: {$ne:"成功"}
+                }
+            },
+            {
+                $project:
+                {
+                    creater: 1,
+                    target: 1,
+                    status: 1,
+                    replyLeft: 1,
+                    mapLoc: 1,
+                    personLoc: 1,
+                    specialInfo: 1,
+                    logo: {
+                        $cond: [
+                            {
+                                $eq : ['$target.username', this.username]
+                            },
+                            'x.jpeg',
+                            {
+                                $cond:[
+                                    {
+                                        $eq : ['$status', '待确认']
+                                    },
+                                    'tbd.jpeg',
+                                    '$target.specialPic'
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ])
         .sort({'_id': 1})
         .exec(callback);
 };
