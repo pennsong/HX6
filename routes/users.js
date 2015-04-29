@@ -29,7 +29,7 @@ function parseError(errors){
 }
 
 function requireAuthentication(req, res, next){
-    console.log(req);
+    //console.log(req);
     req.assert('token', 'required').notEmpty();
 
     var errors = req.validationErrors();
@@ -55,10 +55,9 @@ function requireAuthentication(req, res, next){
                     var tmpSex = doc.specialInfo.sex;
                     if (!(doc.specialInfoTime) || doc.specialInfoTime < moment().startOf('day'))
                     {
-                        doc.specialInfo = undefined;
+                        doc.specialInfo = {sex: tmpSex};
                     }
                     req.user = doc;
-                    req.user.sex = tmpSex;
                     next();
                 }
             }
@@ -242,23 +241,31 @@ router.post('/getFriends', function(req, res) {
 router.post('/updateLocation', function(req, res) {
     req.assert('lng', 'required').notEmpty();
     req.assert('lat', 'required').notEmpty();
-
     var errors = req.validationErrors();
     if (errors) {
         res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
         return;
     }
 
-    req.user.updateLocation(req.body.lng, req.body.lat, function(err){
+    req.user.updateLocation(req.body.lng, req.body.lat, function(err, doc){
         if (err)
         {
-            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : err, err: err });
         }
         else
         {
-            res.json({ppResult: 'ok'});
+            res.json({ppResult: 'ok', ppData: {lastLocation: doc.lastLocation, lastLocationTime: doc.lastLocationTime}});
         }
     });
+});
+
+router.post('/getLastLocation', function(req, res) {
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+    res.json({ppResult: 'ok', ppData: { lastLocation: req.user.lastLocation, lastLocationTime: req.user.lastLocationTime}});
 });
 
 router.post('/sendMeetCheck', function(req, res) {
@@ -489,7 +496,6 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
 router.post('/createMeetNo', function(req, res) {
     req.assert('mapLocName', 'required').notEmpty();
     req.assert('mapLocUid', 'required').notEmpty();
-    req.assert('mapLocAddress', 'required').notEmpty();
     req.assert('sex', 'required').notEmpty();
     req.assert('hair', 'required').notEmpty();
     req.assert('glasses', 'required').notEmpty();
@@ -824,7 +830,6 @@ router.post('/updateSpecialInfo', function(req, res) {
     req.user.specialInfo.clothesType = req.body.clothesType;
     req.user.specialInfo.clothesColor = req.body.clothesColor;
     req.user.specialInfo.clothesStyle = req.body.clothesStyle;
-    req.user.specialInfo.sex = req.user.sex;
     req.user.specialPic = req.body.specialPic;
     req.user.specialInfoTime = moment().valueOf();
 

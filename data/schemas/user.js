@@ -20,7 +20,7 @@ var UserSchema = new mongoose.Schema({
     specialPic : String,
     specialInfoTime : Date,
     lastLocation : {
-        type: [Number],
+        type: [Number],//lng, lat
         index: '2dsphere'
     },
     lastLocationTime : Date,
@@ -59,7 +59,9 @@ UserSchema.statics.login = function(username, password, cid, callback){
                         specialInfo: tmpUser.specialInfo,
                         specialPic: tmpUser.specialPic,
                         specialPicDisplay: tmpUser.specialPic,
-                        specialInfoTime: tmpUser.specialInfoTime
+                        specialInfoTime: tmpUser.specialInfoTime,
+                        lastLocation: tmpUser.lastLocation,
+                        lastLocationTime: tmpUser.lastLocationTime
                     };
 
                     //清空同台设备绑定的其他用户

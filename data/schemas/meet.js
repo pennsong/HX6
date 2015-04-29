@@ -15,7 +15,7 @@ var MeetSchema = new mongoose.Schema({
     replyLeft : { type: Number, default: 2, required: true },
     mapLoc : {
         name : { type: String, required: true },
-        address : { type: String, required: true },
+        address : { type: String },
         uid : { type: String, required: true }
     },
     personLoc : {
