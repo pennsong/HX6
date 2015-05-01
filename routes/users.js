@@ -215,16 +215,8 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
-router.post('/getTheMeet', function(req, res) {
-    req.assert('meetId', 'required').notEmpty();
-
-    var errors = req.validationErrors();
-    if (errors) {
-        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
-        return;
-    }
-
-    req.user.getTheMeet(req.body.meetId, function(err, result){
+router.post('/getUnread', function(req, res) {
+    req.user.getUnread(function(err, result){
         if (err)
         {
             res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
@@ -232,6 +224,33 @@ router.post('/getTheMeet', function(req, res) {
         else
         {
             res.json({ppResult: 'ok', ppData: result});
+        }
+    });
+});
+
+router.post('/read', function(req, res) {
+    req.assert('meetId', 'required').notEmpty();
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.read(req.body.meetId, function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            if (result.creater.length == 0 && result.target.length == 0)
+            {
+                res.status(400).json({ ppResult: 'err', ppMsg: '没找到符合条件的meet!' });
+            }
+            else
+            {
+                res.json({ppResult: 'ok', ppData: result});
+            }
         }
     });
 });

@@ -4,12 +4,14 @@ var MeetSchema = new mongoose.Schema({
     creater: {
         username: { type: String, required: true },
         nickname: String,
-        specialPic: String
+        specialPic: String,
+        unread: Boolean
     },
     target: {
         username: String,
         nickname: String,
-        specialPic: String
+        specialPic: String,
+        unread: Boolean
     },
     status : { type: String, enum: ['待确认', '待回复', '成功'], required: true },
     replyLeft : { type: Number, default: 2, required: true },
