@@ -9,6 +9,9 @@ var User = require('../data/models/user');
 var Meet = require('../data/models/meet');
 var Friend = require('../data/models/friend');
 
+var JPush = require("jpush-sdk");
+var client = JPush.buildClient('de9c785ecdd4b0a348ed49a0', '2205b96b52b2382c000f0b46');
+
 function parseError(errors){
     var result = {
         errors: {},
@@ -212,7 +215,28 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
-router.post('/getMeets', function(req, res) {  
+router.post('/getTheMeet', function(req, res) {
+    req.assert('meetId', 'required').notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.getTheMeet(req.body.meetId, function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            res.json({ppResult: 'ok', ppData: result});
+        }
+    });
+});
+
+router.post('/getMeets', function(req, res) {
     req.user.getMeets(function(err, result){
         if (err)
         {
@@ -225,7 +249,7 @@ router.post('/getMeets', function(req, res) {
     });
 });
 
-router.post('/getFriends', function(req, res) {  
+router.post('/getFriends', function(req, res) {
     req.user.getFriends(function(err, result){
         if (err)
         {
@@ -527,6 +551,19 @@ router.post('/createMeetNo', function(req, res) {
             }
             else
             {
+                client.push().setPlatform('ios', 'android')
+                    .setAudience(JPush.alias(result.meet.creater.username))
+                    .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
+                    .setMessage(result.meet.id)
+                    .setOptions(null, 60)
+                    .send(function(err, res) {
+                        if (err) {
+                            console.log(err.message);
+                        } else {
+                            console.log('Sendno: ' + res.sendno);
+                            console.log('Msg_id: ' + res.msg_id);
+                        }
+                    });
                 res.json({ ppResult: 'ok', ppData: result.meet});
             }
         }

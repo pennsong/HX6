@@ -173,6 +173,34 @@ UserSchema.methods.getMeets = function(callback) {
         .exec(callback);
 };
 
+UserSchema.methods.getTheMeet = function(meetId, callback) {
+    this.model('Meet').findOne(
+        {
+            _id: meetId,
+            $or: [
+                {'creater.username': this.username},
+                {'target.username': this.username}
+            ]
+        }
+    ).exec(
+        function(err, doc)
+        {
+            if (err)
+            {
+                callback(err, null);
+            }
+            else if (!doc)
+            {
+                callback({ppMsg: '没找到对应目标!'}, null);
+            }
+            else
+            {
+                callback(null, doc);
+            }
+        }
+    );
+};
+
 //发送meet检查
 UserSchema.methods.sendMeetCheck = function() {
     var tmpNow =  moment();
