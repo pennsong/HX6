@@ -173,6 +173,21 @@ UserSchema.methods.getMeets = function(callback) {
         .exec(callback);
 };
 
+UserSchema.methods.getAll = function(callback) {
+    var self = this;
+    async.parallel({
+            meets: function(callback)
+            {
+                self.getMeets(callback);
+            },
+            friends: function(callback){
+                self.getFriends(callback);
+            }
+        },
+        callback
+    );
+};
+
 //发送meet检查
 UserSchema.methods.sendMeetCheck = function() {
     var tmpNow =  moment();
@@ -206,13 +221,56 @@ UserSchema.methods.getMeetTargets = function(callback) {
 
 //找本人朋友
 UserSchema.methods.getFriends = function(callback) {
-    this.model('Friend')
-        .find({
-            users: {
-                $elemMatch: {username: this.username}
+    var self = this;
+    async.waterfall([
+            function(next)
+            {
+                self.model('Friend')
+                    .find({
+                        users: {
+                            $elemMatch: {username: self.username}
+                        }
+                    })
+                    .exec(next);
+            },
+            function(result, next)
+            {
+                var friendUsernames = [];
+                //查找user specialPic
+                for (var i = 0; i < result.length; i++)
+                {
+                    for (var j = 0; j < result[i].users.length; j++)
+                    {
+                        if (result[i].users[j].username == self.username)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            friendUsernames.push(result[i].users[j].username);
+                        }
+                    }
+                }
+                self.model('User').find({username : {$in : friendUsernames}}, function(err, docs){
+                    if (err)
+                    {
+                        next({ppMsg: err}, null);
+                    }
+                    else
+                    {
+                        var finalResult = {
+                            main: result,
+                            pics: docs.map(function(item){
+                                return item.specialPic;
+                            })
+                        }
+                        next(null, finalResult);
+                    }
+                });
             }
-        })
-        .exec(callback);
+        ],
+        callback
+    );
 };
 
 //找符合条件的对象
@@ -333,11 +391,13 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
                         users:[
                             {
                                 username: self.username,
-                                nickname: self.nickname
+                                nickname: self.nickname,
+                                unread: true
                             },
                             {
                                 username: doc.username,
-                                nickname: doc.nickname
+                                nickname: doc.nickname,
+                                unread: true
                             }
                         ],
                         messages : []
@@ -517,7 +577,7 @@ UserSchema.methods.confirmMeet = function(username, meetId, callback){
                     //更新meet target
                     self.model('Meet').findOneAndUpdate(
                         {
-                            id: meetId
+                            _id: meetId
                         },
                         {
                             $set:{
@@ -525,8 +585,9 @@ UserSchema.methods.confirmMeet = function(username, meetId, callback){
                                     username: result.username,
                                     nickname: result.username,
                                     specialPic: result.specialPic,
-                                    unread: true
-                                }
+                                    unread: false
+                                },
+                                status: '待回复'
                             }
                         },
                         next
@@ -679,79 +740,5 @@ UserSchema.methods.read = function(meetId, callback) {
         callback
     );
 }
-
-UserSchema.methods.getUnread = function(callback){
-
-    var self = this;
-    async.parallel({
-            friends: function(callback)
-            {
-                self.model('Friend')
-                    .find({
-                        users: {
-                            $elemMatch: {
-                                username: self.username,
-                                unread: true
-                            }
-                        }
-                    })
-                    .exec(callback);
-            },
-            meets: function(callback){
-                self.model('Meet')
-                    .aggregate([
-                        {
-                            $match:
-                            {
-                                $or: [
-                                    {
-                                        'creater.username': self.username,
-                                        'creater.unread': true
-                                    },
-                                    {
-                                        'target.username': self.username,
-                                        'target.unread': true
-                                    }
-                                ],
-                                status: {$ne:"成功"}
-                            }
-                        },
-                        {
-                            $project:
-                            {
-                                creater: 1,
-                                target: 1,
-                                status: 1,
-                                replyLeft: 1,
-                                mapLoc: 1,
-                                personLoc: 1,
-                                specialInfo: 1,
-                                logo: {
-                                    $cond: [
-                                        {
-                                            $eq : ['$target.username', self.username]
-                                        },
-                                        'x.jpeg',
-                                        {
-                                            $cond:[
-                                                {
-                                                    $eq : ['$status', '待确认']
-                                                },
-                                                'tbd.jpeg',
-                                                '$target.specialPic'
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    ])
-                    .sort({'_id': 1})
-                    .exec(callback);
-            }
-        },
-        callback
-    );
-};
 
 module.exports = UserSchema;

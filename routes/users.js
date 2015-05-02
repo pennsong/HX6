@@ -215,19 +215,6 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
-router.post('/getUnread', function(req, res) {
-    req.user.getUnread(function(err, result){
-        if (err)
-        {
-            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
-        }
-        else
-        {
-            res.json({ppResult: 'ok', ppData: result});
-        }
-    });
-});
-
 router.post('/read', function(req, res) {
     req.assert('meetId', 'required').notEmpty();
     var errors = req.validationErrors();
@@ -270,6 +257,19 @@ router.post('/getMeets', function(req, res) {
 
 router.post('/getFriends', function(req, res) {
     req.user.getFriends(function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            res.json({ppResult: 'ok', ppData: result});
+        }
+    });
+});
+
+router.post('/getAll', function(req, res) {
+    req.user.getAll(function(err, result){
         if (err)
         {
             res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
@@ -606,7 +606,6 @@ router.post('/createMeetClickTarget', function(req, res) {
     req.assert('username', 'required').notEmpty();
     req.assert('mapLocName', 'required').notEmpty();
     req.assert('mapLocUid', 'required').notEmpty();
-    req.assert('mapLocAddress', 'required').notEmpty();
 
     var errors = req.validationErrors();
     if (errors) {
@@ -705,6 +704,20 @@ router.post('/createMeetClickTarget', function(req, res) {
                                     }
                                     else
                                     {
+                                        //jpush通知自己和对方
+                                        client.push().setPlatform('ios', 'android')
+                                            .setAudience(JPush.alias(doc.creater.username, doc.target.username))
+                                            .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
+                                            //.setMessage(doc.id)
+                                            .setOptions(null, 60)
+                                            .send(function(err, res) {
+                                                if (err) {
+                                                    console.log(err.message);
+                                                } else {
+                                                    console.log('Sendno: ' + res.sendno);
+                                                    console.log('Msg_id: ' + res.msg_id);
+                                                }
+                                            });
                                         res.json({ ppResult: 'ok', ppData: doc });
                                     }
                                 });
@@ -750,7 +763,7 @@ router.post('/confirmMeetClickTarget', function(req, res) {
         return;
     }
 
-    if ((req.user.specialInfoTime && req.user.specialInfoTime >= moment(moment().format('YYYY-MM-DD')).valueOf())){
+    if ((req.user.specialInfoTime && req.user.specialInfoTime < moment(moment().format('YYYY-MM-DD')).valueOf())){
         res.status(400).json({ ppResult: 'err', ppMsg: "请更新特征信息!"});
     }
     else
@@ -766,8 +779,8 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                         }
                         else
                         {
-                            for (var item in docs){
-                                if (item.target.username == req.body.username)
+                            for (var i = 0; i < docs.length; i++){
+                                if (docs[i].target.username == req.body.username)
                                 {
                                     callback({ppMsg: '你已对此人发出过邀请!'}, null);
                                     break;
@@ -786,8 +799,8 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                         }
                         else
                         {
-                            for (var item in docs){
-                                if (item.users[0].username == req.body.username || item.users[1].username == req.body.username)
+                            for (var i = 0; i < docs.length; i++){
+                                if (docs[i].users[0].username == req.body.username || docs[i].users[1].username == req.body.username)
                                 {
                                     callback({ppMsg: '此人已是你朋友!'}, null);
                                     break;
@@ -824,6 +837,20 @@ router.post('/confirmMeetClickTarget', function(req, res) {
                                             }
                                             else
                                             {
+                                                //jpush通知自己和对方
+                                                client.push().setPlatform('ios', 'android')
+                                                    .setAudience(JPush.alias(doc.creater.username, doc.target.username))
+                                                    .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
+                                                    //.setMessage(result.meet.id)
+                                                    .setOptions(null, 60)
+                                                    .send(function(err, res) {
+                                                        if (err) {
+                                                            console.log(err.message);
+                                                        } else {
+                                                            console.log('Sendno: ' + res.sendno);
+                                                            console.log('Msg_id: ' + res.msg_id);
+                                                        }
+                                                    });
                                                 res.json({ ppResult: 'ok', ppData: doc });
                                             }
                                         }
@@ -1061,6 +1088,19 @@ router.post('/replyMeetClickTarget', function(req, res) {
             }
             else
             {
+                client.push().setPlatform('ios', 'android')
+                    .setAudience(JPush.alias(req.body.username))
+                    .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
+                    .setMessage(result.meet.id)
+                    .setOptions(null, 60)
+                    .send(function(err, res) {
+                        if (err) {
+                            console.log(err.message);
+                        } else {
+                            console.log('Sendno: ' + res.sendno);
+                            console.log('Msg_id: ' + res.msg_id);
+                        }
+                    });
                 res.json({ ppResult: 'ok' });
             }
         }
@@ -1097,7 +1137,7 @@ router.get('/test', function(req, res){
             if(!err){
                 User.findOne({username: 'a'}).exec(function(err, doc){
                         doc.getFriends(function(err, docs){
-                            for (var i in docs) {
+                            for (var i = 0; i < docs.length; i++) {
                                 console.log(docs[i]);
                             }
                             res.end('tt');
