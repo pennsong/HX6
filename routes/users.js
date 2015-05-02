@@ -405,7 +405,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                         callback(err, null);
                     }
                     else {
-                        targets2 = docs.map(function(item){
+                        targets2 = docs.main.map(function(item){
                             return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
                         callback(null, null);
@@ -484,7 +484,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                     }
                     else
                     {
-                        targets2 = docs.map(function(item){
+                        targets2 = docs.main.map(function(item){
                             return (item.users[0].username == req.user.username ? item.users[1].username : item.users[0].username);
                         });
                         callback(null, null);
@@ -652,9 +652,9 @@ router.post('/createMeetClickTarget', function(req, res) {
                     }
                     else
                     {
-                        for(var i = 0; i < docs.length; i++)
+                        for(var i = 0; i < docs.main.length; i++)
                         {
-                            if (docs[i].users[0].username == req.body.username || docs[i].users[1].username == req.body.username)
+                            if (docs.main[i].users[0].username == req.body.username || docs.main[i].users[1].username == req.body.username)
                             {
                                 //此人已是你好友
                                 callback({ppMsg: '此人已是你好友!'}, null);
@@ -1091,7 +1091,7 @@ router.post('/replyMeetClickTarget', function(req, res) {
                 client.push().setPlatform('ios', 'android')
                     .setAudience(JPush.alias(req.body.username))
                     .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
-                    .setMessage(result.meet.id)
+                    //.setMessage(result.meet.id)
                     .setOptions(null, 60)
                     .send(function(err, res) {
                         if (err) {

@@ -100,26 +100,9 @@ UserSchema.statics.login = function(username, password, cid, callback){
                     function (err, numberAffected, raw)
                     {
                         loginResult.token = token;
-                        next(err, null);
+                        next(err, loginResult);
                     }
                 );
-            },
-            function(result, next)
-            {
-                //get meets
-                tmpUser.getMeets(next);
-            },
-            function(result, next)
-            {
-                loginResult.meets = result;
-                //get friends
-                tmpUser.getFriends(next);
-
-            },
-            function(result, next)
-            {
-                loginResult.friends = result;
-                next(null, loginResult);
             }
         ],
         callback
@@ -248,6 +231,8 @@ UserSchema.methods.getFriends = function(callback) {
                         else
                         {
                             friendUsernames.push(result[i].users[j].username);
+                            result[i].friendUsername = result[i].users[j].username;
+                            result[i].friendNickname = result[i].users[j].nickname;
                         }
                     }
                 }
@@ -258,11 +243,16 @@ UserSchema.methods.getFriends = function(callback) {
                     }
                     else
                     {
+                        var pics = {};
+                        for (var i = 0; i < docs.length; i++)
+                        {
+                            var key = docs[i].username;
+                            pics[key] = docs[i].specialPic;
+                        }
+
                         var finalResult = {
                             main: result,
-                            pics: docs.map(function(item){
-                                return item.specialPic;
-                            })
+                            pics: pics
                         }
                         next(null, finalResult);
                     }
