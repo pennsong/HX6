@@ -226,13 +226,14 @@ UserSchema.methods.getFriends = function(callback) {
                     {
                         if (result[i].users[j].username == self.username)
                         {
-                            continue;
+                            result[i].unread = result[i].users[j].unread;
                         }
                         else
                         {
                             friendUsernames.push(result[i].users[j].username);
                             result[i].friendUsername = result[i].users[j].username;
                             result[i].friendNickname = result[i].users[j].nickname;
+
                         }
                     }
                 }
@@ -692,7 +693,7 @@ UserSchema.methods.replyMeetClickTarget = function(username, meetId, callback){
     );
 };
 
-UserSchema.methods.read = function(meetId, callback) {
+UserSchema.methods.readMeet = function(meetId, callback) {
     var self = this;
     async.parallel({
             creater: function(callback)
@@ -729,6 +730,14 @@ UserSchema.methods.read = function(meetId, callback) {
         },
         callback
     );
-}
+};
+
+UserSchema.methods.readFriend = function(FriendId, callback) {
+    this.model('Friend').findOneAndUpdate(
+        {_id: FriendId, "users.username":this.username},
+        {$set: {"users.$.unread": false}},
+        callback
+    );
+};
 
 module.exports = UserSchema;

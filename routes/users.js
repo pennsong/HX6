@@ -215,7 +215,7 @@ router.post('/login', function(req, res) {
 //auth
 router.all('*', requireAuthentication);
 
-router.post('/read', function(req, res) {
+router.post('/readMeet', function(req, res) {
     req.assert('meetId', 'required').notEmpty();
     var errors = req.validationErrors();
     if (errors) {
@@ -223,7 +223,7 @@ router.post('/read', function(req, res) {
         return;
     }
 
-    req.user.read(req.body.meetId, function(err, result){
+    req.user.readMeet(req.body.meetId, function(err, result){
         if (err)
         {
             res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
@@ -238,6 +238,26 @@ router.post('/read', function(req, res) {
             {
                 res.json({ppResult: 'ok', ppData: result});
             }
+        }
+    });
+});
+
+router.post('/readFriend', function(req, res) {
+    req.assert('friendId', 'required').notEmpty();
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.readFriend(req.body.friendId, function(err, result){
+        if (err)
+        {
+            res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+        }
+        else
+        {
+            res.json({ppResult: 'ok', ppData: result});
         }
     });
 });
@@ -704,9 +724,9 @@ router.post('/createMeetClickTarget', function(req, res) {
                                     }
                                     else
                                     {
-                                        //jpush通知自己和对方
+                                        //jpush通知对方
                                         client.push().setPlatform('ios', 'android')
-                                            .setAudience(JPush.alias(doc.creater.username, doc.target.username))
+                                            .setAudience(JPush.alias(req.body.username))
                                             .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
                                             //.setMessage(doc.id)
                                             .setOptions(null, 60)
@@ -740,6 +760,20 @@ router.post('/createMeetClickTarget', function(req, res) {
                                         }
                                         else
                                         {
+                                            //jpush通知对方
+                                            client.push().setPlatform('ios', 'android')
+                                                .setAudience(JPush.alias(req.body.username))
+                                                .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
+                                                //.setMessage(doc.id)
+                                                .setOptions(null, 60)
+                                                .send(function(err, res) {
+                                                    if (err) {
+                                                        console.log(err.message);
+                                                    } else {
+                                                        console.log('Sendno: ' + res.sendno);
+                                                        console.log('Msg_id: ' + res.msg_id);
+                                                    }
+                                                });
                                             res.json({ ppResult: 'ok'});
                                         }
                                     });

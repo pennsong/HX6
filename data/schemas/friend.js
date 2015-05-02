@@ -15,7 +15,8 @@ var FriendSchema = mongoose.Schema({
         time: { type: Date, required: true }
     }],
     friendUsername: { type: String },
-    friendNickname: { type: String }
+    friendNickname: { type: String },
+    unread: {type: Boolean}
 
 });
 
