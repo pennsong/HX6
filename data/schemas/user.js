@@ -649,7 +649,8 @@ UserSchema.methods.read = function(meetId, callback) {
                 self.model('Meet').findOneAndUpdate(
                     {
                         _id: meetId,
-                        'creater.username': self.username
+                        'creater.username': self.username,
+                        'creater.unread': true
                     },
                     {
                         $set:{
@@ -663,7 +664,8 @@ UserSchema.methods.read = function(meetId, callback) {
                 self.model('Meet').findOneAndUpdate(
                     {
                         _id: meetId,
-                        'target.username': self.username
+                        'target.username': self.username,
+                        'target.unread': true
                     },
                     {
                         $set:{

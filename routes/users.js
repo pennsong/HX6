@@ -243,7 +243,7 @@ router.post('/read', function(req, res) {
         }
         else
         {
-            if (result.creater.length == 0 && result.target.length == 0)
+            if (!result.creater && !result.target)
             {
                 res.status(400).json({ ppResult: 'err', ppMsg: '没找到符合条件的meet!' });
             }
