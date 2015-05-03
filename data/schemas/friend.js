@@ -6,14 +6,6 @@ var FriendSchema = mongoose.Schema({
         nickname: { type: String, required: true },
         unread: { type: Boolean }
     }],
-    messages : [{
-        //username
-        from : { type: String, required: true },
-        //username
-        to : { type: String, required: true },
-        content: { type: String, required: true },
-        time: { type: Date, required: true }
-    }],
     friendUsername: { type: String },
     friendNickname: { type: String },
     unread: {type: Boolean}

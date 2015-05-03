@@ -115,7 +115,7 @@ UserSchema.methods.getMeets = function(callback) {
             {
                 $match:
                 {
-                    $or: [
+                    $or : [
                         {'creater.username': this.username},
                         {'target.username': this.username}
                     ],
@@ -390,8 +390,7 @@ UserSchema.methods.createFriend = function(targetUsername, callback) {
                                 nickname: doc.nickname,
                                 unread: true
                             }
-                        ],
-                        messages : []
+                        ]
                     },
                     callback
                 );
@@ -736,6 +735,69 @@ UserSchema.methods.readFriend = function(FriendId, callback) {
     this.model('Friend').findOneAndUpdate(
         {_id: FriendId, "users.username":this.username},
         {$set: {"users.$.unread": false}},
+        callback
+    );
+};
+
+UserSchema.methods.sendMsg = function(friendUsername, content, callback) {
+    this.model('Message')
+        .create({
+            from: this.username,
+            to: friendUsername,
+            content: content,
+            time: moment().valueOf(),
+            unread: true
+        },
+        callback
+    );
+};
+
+UserSchema.methods.getMsg = function(friendUsername, callback) {
+    var self = this;
+    async.waterfall([
+            function(next)
+            {
+                self.model('Message')
+                    .findOne({
+                        from: friendUsername,
+                        to: self.username,
+                        unread: true
+                    })
+                    .sort('time')
+                    .exec(next);
+            },
+            function(result, next) {
+                var timeLine = moment().add(-1, 'm').valueOf();
+                if (result && result.time < timeLine)
+                {
+                    timeLine = result.time;
+                }
+
+                self.model('Message')
+                    .find({
+                        $or: [
+                            { from: friendUsername, to: self.username },
+                            { to: friendUsername, from: self.username }
+                        ]
+                        ,
+                        time: {$gte: timeLine}
+                    })
+                    .sort('time')
+                    .exec(next)
+            }
+        ],
+        callback
+    );
+};
+
+UserSchema.methods.getFriendUnreadCount = function(friendUsername, callback) {
+    this.model('Message')
+        .count(
+        {
+            from: friendUsername,
+            to: this.username,
+            unread: true
+        },
         callback
     );
 };

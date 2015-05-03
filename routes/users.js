@@ -8,6 +8,7 @@ var http = require("http");
 var User = require('../data/models/user');
 var Meet = require('../data/models/meet');
 var Friend = require('../data/models/friend');
+var Message = require('../data/models/message');
 
 var JPush = require("jpush-sdk");
 var client = JPush.buildClient('de9c785ecdd4b0a348ed49a0', '2205b96b52b2382c000f0b46');
@@ -1090,6 +1091,79 @@ router.post('/replyMeetSearchTarget', function(req, res) {
         ],
         function(err, result)
         {
+            if (err)
+            {
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+            }
+            else
+            {
+                res.json({ ppResult: 'ok', ppData: result });
+            }
+        }
+    );
+});
+
+router.post('/sendMsg', function(req, res){
+    req.assert('friendUsername', 'required').notEmpty();
+    req.assert('content', 'required').notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.sendMsg(
+        req.body.friendUsername,
+        req.body.content,
+        function(err, result){
+            if (err)
+            {
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+            }
+            else
+            {
+                res.json({ ppResult: 'ok', ppData: result });
+            }
+        }
+    );
+});
+
+router.post('/getMsg', function(req, res){
+    req.assert('friendUsername', 'required').notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+    req.user.getMsg(
+        req.body.friendUsername,
+        function(err, result){
+            if (err)
+            {
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+            }
+            else
+            {
+                res.json({ ppResult: 'ok', ppData: result });
+            }
+        }
+    );
+});
+
+router.post('/getFriendUnreadCount', function(req, res){
+    req.assert('friendUsername', 'required').notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.getFriendUnreadCount(
+        req.body.friendUsername,
+        function(err, result){
             if (err)
             {
                 res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
