@@ -117,8 +117,8 @@ var serverRoot = 'http://localhost:3000/';
 var moment = require('moment');
 var async = require("async");
 
-//var oriPoint = [121.59494756732285, 31.20953894223199];
-var oriPoint = [119.9587618517866, 31.76326833657852];
+var oriPoint = [121.59494756732285, 31.20953894223199];
+//var oriPoint = [119.9587618517866, 31.76326833657852];
 var farPoint = [125.32235400000002, 43.88693199999999];
 var testStartTime = moment();
 

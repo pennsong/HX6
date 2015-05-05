@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var async = require("async");
 
 var MeetSchema = new mongoose.Schema({
     creater: {
@@ -34,5 +35,20 @@ var MeetSchema = new mongoose.Schema({
         clothesStyle : { type: String }
     }
 });
+
+//MeetSchema.statics.remindCreater = function(specialInfoUsername, callback){
+//    var self = this;
+//
+//    async.waterfall([
+//            function(next){
+//
+//            },
+//            function(result, next){
+//
+//            }
+//        ],
+//        callback
+//    );
+//}
 
 module.exports = MeetSchema;

@@ -591,19 +591,6 @@ router.post('/createMeetNo', function(req, res) {
             }
             else
             {
-                client.push().setPlatform('ios', 'android')
-                    .setAudience(JPush.alias(result.meet.creater.username))
-                    .setNotification('Hi, JPush', JPush.ios('ios alert'), JPush.android('android alert', null, 1))
-                    .setMessage(result.meet.id)
-                    .setOptions(null, 60)
-                    .send(function(err, res) {
-                        if (err) {
-                            console.log(err.message);
-                        } else {
-                            console.log('Sendno: ' + res.sendno);
-                            console.log('Msg_id: ' + res.msg_id);
-                        }
-                    });
                 res.json({ ppResult: 'ok', ppData: result.meet});
             }
         }
@@ -958,6 +945,8 @@ router.post('/updateSpecialInfo', function(req, res) {
         }
         else
         {
+            //通知附近有发送待确认meet中条件匹配的创建者
+            //todo
             res.json({ ppResult: 'ok' });
         }
     });
@@ -1123,6 +1112,19 @@ router.post('/sendMsg', function(req, res){
             }
             else
             {
+                client.push().setPlatform('ios', 'android')
+                    .setAudience(JPush.alias(req.body.friendUsername))
+                    .setNotification('Hi, JPush', JPush.ios(req.user.username + "," + req.user.nickname + ":发来一条消息" ), JPush.android(req.user.username + "," + req.user.nickname + ":发来一条消息", null, 1))
+                    //.setMessage(result.meet.id)
+                    .setOptions(null, 60)
+                    .send(function(err, res) {
+                        if (err) {
+                            console.log(err.message);
+                        } else {
+                            console.log('Sendno: ' + res.sendno);
+                            console.log('Msg_id: ' + res.msg_id);
+                        }
+                    });
                 res.json({ ppResult: 'ok', ppData: result });
             }
         }
@@ -1138,6 +1140,30 @@ router.post('/getMsg', function(req, res){
         return;
     }
     req.user.getMsg(
+        req.body.friendUsername,
+        function(err, result){
+            if (err)
+            {
+                res.status(400).json({ ppResult: 'err', ppMsg: err.ppMsg ? err.ppMsg : null, err: err });
+            }
+            else
+            {
+                res.json({ ppResult: 'ok', ppData: result });
+            }
+        }
+    );
+});
+
+router.post('/readMsg', function(req, res){
+    req.assert('friendUsername', 'required').notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ ppResult: 'err', ppMsg: "缺少必填项!", err: parseError(errors)});
+        return;
+    }
+
+    req.user.readMsg(
         req.body.friendUsername,
         function(err, result){
             if (err)

@@ -258,7 +258,41 @@ UserSchema.methods.getFriends = function(callback) {
                         next(null, finalResult);
                     }
                 });
-            }
+            },
+            function(result, next)
+            {
+                //统计未读消息
+                self.model('Message').aggregate(
+                    [
+                        {
+                            $match:{
+                                to: self.username,
+                                unread: true
+                            }
+                        },
+                        {
+                            $group: { _id: "$from", count: { $sum: 1 }}
+                        }
+                    ],
+                    function(err, docs)
+                    {
+                        var unreadMsgCounts = {};
+                        for (var i = 0; i < docs.length; i++)
+                        {
+                            unreadMsgCounts[docs[i]._id] = docs[i].count;
+                        }
+                        if (err)
+                        {
+                            next(err, null);
+                        }
+                        else
+                        {
+                            result.unreadMsgCounts = unreadMsgCounts;
+                            next(null, result);
+                        }
+                    }
+                );
+            },
         ],
         callback
     );
@@ -748,6 +782,15 @@ UserSchema.methods.sendMsg = function(friendUsername, content, callback) {
             time: moment().valueOf(),
             unread: true
         },
+        callback
+    );
+};
+
+UserSchema.methods.readMsg = function(friendUsername, callback) {
+    this.model('Message').update(
+        {from: friendUsername, to: this.username, unread: true},
+        {unread: false},
+        {multi: true},
         callback
     );
 };
