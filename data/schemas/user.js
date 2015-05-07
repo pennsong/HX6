@@ -178,7 +178,7 @@ UserSchema.methods.sendMeetCheck = function() {
     if (!(this.specialInfoTime && this.specialInfoTime > moment(moment().format('YYYY-MM-DD')).valueOf())){
         return '请更新特征信息!';
     }
-    else if (!(this.lastLocationTime > moment(tmpNow).add(-5, 'm').valueOf()))
+    else if (!(this.lastLocationTime > moment(tmpNow).add(-1, 'd').valueOf()))
     {
         return '无法定位最新位置!';
     }
@@ -310,7 +310,7 @@ UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothe
                     maxDistance: 500,
                     query: {
                         specialInfoTime: {$gt: new Date(moment().startOf('day'))},
-                        lastLocationTime: {$gt: new Date(moment().add(-5, 'm'))},
+                        lastLocationTime: {$gt: new Date(moment().add(-1, 'd'))},
                         "specialInfo.sex": sex,
                         username: {$ne: this.username}
                     },
