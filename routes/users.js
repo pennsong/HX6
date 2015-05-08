@@ -57,7 +57,7 @@ function requireAuthentication(req, res, next){
                 else
                 {
                     var tmpSex = doc.specialInfo.sex;
-                    if (!(doc.specialInfoTime) || doc.specialInfoTime < moment().startOf('day'))
+                    if (!(doc.specialInfoTime) || doc.specialInfoTime < moment().startOf('day').add(-8, 'hours'))
                     {
                         doc.specialInfo = {sex: tmpSex};
                     }
@@ -435,7 +435,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
             },
             function(callback){
                 //找符合条件的对象
-                req.user.getTargets(req.body.sex, req.body.hair, req.body.glasses, req.body.clothesType, req.body.clothesColor, req.body.clothesStyle, function(err, docs){
+                req.user.getTargets(req.body.sex, req.body.hair, req.body.glasses, req.body.clothesType, req.body.clothesColor, req.body.clothesStyle, targets1.concat(target2), function(err, docs){
                     if (err)
                     {
                         callback(err, null);

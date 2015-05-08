@@ -299,7 +299,7 @@ UserSchema.methods.getFriends = function(callback) {
 };
 
 //找符合条件的对象
-UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothesColor, clothesStyle, callback) {
+UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothesColor, clothesStyle, exclusiveArray, callback) {
     this.model('User')
         .aggregate(
         [
@@ -312,7 +312,8 @@ UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothe
                         specialInfoTime: {$gt: new Date(moment().startOf('day'))},
                         lastLocationTime: {$gt: new Date(moment().add(-1, 'd'))},
                         "specialInfo.sex": sex,
-                        username: {$ne: this.username}
+                        username: {$ne: this.username},
+			username: {$nin: exclusiveArray}
                     },
                     spherical: true
                 }
