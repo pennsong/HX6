@@ -947,7 +947,7 @@ router.post('/updateSpecialInfo', function(req, res) {
         {
             //通知附近有发送待确认meet中条件匹配的创建者
             //todo
-            res.json({ ppResult: 'ok' });
+            res.json({ ppResult: 'ok', ppData: req.user.specialInfoTime});
         }
     });
 });
