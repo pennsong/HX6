@@ -438,6 +438,7 @@ router.post('/createMeetSearchTarget', function(req, res) {
                 req.user.getTargets(req.body.sex, req.body.hair, req.body.glasses, req.body.clothesType, req.body.clothesColor, req.body.clothesStyle, targets1.concat(target2), function(err, docs){
                     if (err)
                     {
+                        console.log(err);
                         callback(err, null);
                     }
                     else {

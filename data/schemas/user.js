@@ -313,7 +313,7 @@ UserSchema.methods.getTargets = function(sex, hair, glasses, clothesType, clothe
                         lastLocationTime: {$gt: new Date(moment().add(-1, 'd'))},
                         "specialInfo.sex": sex,
                         username: {$ne: this.username},
-			username: {$nin: exclusiveArray}
+			            username: {$nin: exclusiveArray}
                     },
                     spherical: true
                 }
