@@ -472,9 +472,6 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
         }
         else
         {
-            targets3 = targets3.filter( function( item ) {
-                return (targets1.indexOf( item.username ) < 0 && targets2.indexOf( item.username ));
-            });
             res.json({ppResult: 'ok', ppData: targets3 });
         }
     }
@@ -535,6 +532,7 @@ router.post('/confirmMeetSearchTarget', function(req, res) {
                                     doc.specialInfo.clothesType,
                                     doc.specialInfo.clothesColor,
                                     doc.specialInfo.clothesStyle,
+                                    targets1.concat(targets2),
                                     function(err, docs){
                                         if (err)
                                         {
